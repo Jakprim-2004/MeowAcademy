@@ -48,6 +48,7 @@ const Navbar = () => {
   const navLinks = [
     { name: "หน้าหลัก", href: "/" },
     { name: "บริการ", href: "/#services" },
+    { name: "คำถามที่พบบ่อย", href: "/#faq" },
     { name: "ติดต่อเรา", href: "/#contact" },
   ];
 

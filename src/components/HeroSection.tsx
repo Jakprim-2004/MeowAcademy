@@ -68,13 +68,13 @@ const HeroSection = () => {
           {/* Cat Mascot */}
           <div className="lg:col-span-5 relative flex justify-center animate-scale-in order-first lg:order-last">
             {/* Soft glow behind cat */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl" />
 
             {/* Cat image */}
             <img
               src={catMascot}
               alt="MeowAcademy Mascot"
-              className="relative w-64 md:w-80 lg:w-96 animate-bounce-slow drop-shadow-2xl"
+              className="relative w-96 md:w-[500px] lg:w-[600px] animate-bounce-slow drop-shadow-2xl"
             />
 
           </div>

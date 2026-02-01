@@ -30,6 +30,32 @@ const ReviewCard = memo(({ review }: { review: Review }) => (
 
 ReviewCard.displayName = "ReviewCard";
 
+const ChatReviewCard = memo(({ imageSrc }: { imageSrc: string }) => (
+    <div className="w-[180px] md:w-[220px] aspect-[9/16] flex-shrink-0 mx-4 rounded-xl overflow-hidden border-4 border-white shadow-lg transform-gpu will-change-transform bg-gray-100">
+        <img
+            src={imageSrc}
+            alt="Customer Chat Review"
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+        />
+    </div>
+));
+
+const PaymentSlipCard = memo(({ imageSrc }: { imageSrc: string }) => (
+    <div className="w-[180px] md:w-[220px] aspect-[9/16] flex-shrink-0 mx-4 rounded-xl overflow-hidden border-4 border-white shadow-lg transform-gpu will-change-transform bg-gray-100">
+        <img
+            src={imageSrc}
+            alt="Customer Payment Slip"
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+        />
+    </div>
+));
+
+PaymentSlipCard.displayName = "PaymentSlipCard";
+
+
+
 const TestimonialsSection = () => {
     // 1. Define Static Mock Data (Fallback & Filler)
     const mockReviews = [
@@ -67,10 +93,12 @@ const TestimonialsSection = () => {
 
     const [reviews, setReviews] = useState<Review[]>(mockReviews);
     const [totalOrders, setTotalOrders] = useState(82);
+    const [paymentSlipFiles, setPaymentSlipFiles] = useState<string[]>([]);
 
     useEffect(() => {
         fetchReviews();
         fetchTotalOrders();
+        fetchPaymentSlips();
     }, []);
 
     const fetchReviews = async () => {
@@ -86,7 +114,7 @@ const TestimonialsSection = () => {
 
             if (data && data.length > 0) {
                 // Combine Mock + Real Data
-                setReviews(prev => [...prev, ...(data as Review[])]);
+                setReviews(prev => [...prev, ...(data as unknown as Review[])]);
             }
         } catch (error) {
             console.error("Error fetching reviews:", error);
@@ -97,14 +125,14 @@ const TestimonialsSection = () => {
         try {
             // Call RPC function to get count (bypasses RLS)
             // MAKE SURE to run the SQL function creation in Supabase Dashboard first!
-            const { data, error } = await supabase.rpc('get_total_orders');
+            const { data, error } = await supabase.rpc('get_total_orders' as any);
 
             if (error) {
                 console.error("RPC Error:", error);
                 throw error;
             }
 
-            const count = data as number;
+            const count = data as unknown as number;
 
             if (typeof count === 'number') {
                 const targetCount = 82 + count;
@@ -127,6 +155,70 @@ const TestimonialsSection = () => {
             console.error("Error counting profiles:", error);
             // Fallback to static if profiles table doesn't exist or error
             setTotalOrders(82);
+        }
+    };
+
+    const fetchPaymentSlips = async () => {
+        try {
+            // 1. List root items (Files & Folders)
+            const { data: rootItems, error } = await supabase
+                .storage
+                .from('payment-slips')
+                .list('', {
+                    limit: 20,
+                    offset: 0,
+                    sortBy: { column: 'created_at', order: 'desc' },
+                });
+
+            if (error) {
+                console.error("Error fetching payment slips:", error);
+                return;
+            }
+
+            if (rootItems) {
+                let allImagePaths: string[] = [];
+
+                // 2. Identify Root Files (Images)
+                const rootFiles = rootItems
+                    .filter(item => item.metadata?.mimetype?.startsWith('image/') || item.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+                    .map(item => item.name);
+
+                allImagePaths = [...rootFiles];
+
+                // 3. Identify Folders (to check for nested slips)
+                // Folders usually don't have a mimetype in metadata
+                const potentialFolders = rootItems.filter(item =>
+                    !item.metadata?.mimetype &&
+                    !item.name.startsWith('.') &&
+                    item.name !== '.emptyFolderPlaceholder'
+                );
+
+                // 4. Fetch content from recent folders (Limit to avoid N+1 explosion)
+                // We check the first 5 folders (newest first due to sort)
+                for (const folder of potentialFolders.slice(0, 5)) {
+                    const { data: folderFiles } = await supabase
+                        .storage
+                        .from('payment-slips')
+                        .list(folder.name, {
+                            limit: 5,
+                            sortBy: { column: 'created_at', order: 'desc' }
+                        });
+
+                    if (folderFiles && folderFiles.length > 0) {
+                        const folderImages = folderFiles
+                            .filter(f => f.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+                            .map(f => `${folder.name}/${f.name}`);
+
+                        allImagePaths = [...allImagePaths, ...folderImages];
+                    }
+                }
+
+                // 5. Update State
+                // Slice to keep the UI clean
+                setPaymentSlipFiles(allImagePaths.slice(0, 20));
+            }
+        } catch (error) {
+            console.error("Error in fetchPaymentSlips:", error);
         }
     };
 
@@ -189,6 +281,20 @@ const TestimonialsSection = () => {
                         ))}
                     </div>
                 </div>
+
+                {/* Row 3: Chat Screenshots / Payment Slips */}
+                {paymentSlipFiles.length > 0 && (
+                    <div className="flex w-full overflow-hidden pt-8">
+                        <div className="flex animate-scroll w-max" style={{ animationDuration: '60s' }}>
+                            {[...paymentSlipFiles, ...paymentSlipFiles].map((img, i) => (
+                                <PaymentSlipCard
+                                    key={`slip-${i}-${img}`}
+                                    imageSrc={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/payment-slips/${img}`}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="container mx-auto px-4 mt-16">
