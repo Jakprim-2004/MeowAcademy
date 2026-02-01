@@ -19,6 +19,7 @@ const Sidebar = ({ className }: SidebarProps) => {
         try {
             await supabase.auth.signOut();
             localStorage.clear();
+            sessionStorage.clear();
             toast.success("ออกจากระบบเรียบร้อย");
             navigate("/login");
         } catch (error) {

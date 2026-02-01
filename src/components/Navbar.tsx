@@ -20,10 +20,64 @@ const Navbar = () => {
   const navigate = useNavigate();
   const isLoggingOut = useRef(false);
 
-  // ... useEffect logic remains same
+  useEffect(() => {
+    // Get initial session
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error("Session check error:", error);
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(session?.user ?? null);
+
+      if (_event === 'SIGNED_OUT') {
+        setUser(null);
+        navigate("/login");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const handleLogout = async () => {
-    // ... logic remains same
+    if (isLoggingOut.current) return;
+
+    isLoggingOut.current = true;
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
+      // Clear all storage
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Clear generic cookies (cannot clear HttpOnly/Secure cookies from server, but can try common ones)
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+
+      toast.success("ออกจากระบบเรียบร้อย");
+      setUser(null);
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Force logout on error
+      localStorage.clear();
+      navigate("/login");
+    } finally {
+      isLoggingOut.current = false;
+    }
   };
 
   const navLinks = [
