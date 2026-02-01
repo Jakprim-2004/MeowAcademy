@@ -328,7 +328,7 @@ const Register = () => {
     }
   };
 
-  const handleSlipUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSlipUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -338,19 +338,87 @@ const Register = () => {
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("ไฟล์ใหญ่เกินไป (สูงสุด 5MB)");
+    // Initial size check (prevent massive files from freezing browser)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("ไฟล์ต้นฉบับใหญ่เกินไป (สูงสุด 10MB)");
       return;
     }
 
-    // Convert to base64
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setSlipImage(base64);
-    };
-    reader.readAsDataURL(file);
+    const toastId = toast.loading("กำลังประมวลผลรูปภาพ...");
+
+    try {
+      // Image Compression Logic
+      const compressImage = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          const reader = new FileReader();
+
+          reader.onload = (e) => {
+            img.src = e.target?.result as string;
+          };
+
+          reader.onerror = (e) => reject(e);
+
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            // Target dimensions (Max 1280px - good balance for readability vs size)
+            const MAX_WIDTH = 1280;
+            const MAX_HEIGHT = 1280;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+
+            if (ctx) {
+              // Background white for transparent PNGs converted to JPEG
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fillRect(0, 0, width, height);
+              ctx.drawImage(img, 0, 0, width, height);
+
+              // Compress to JPEG with 0.7 quality (Target ~100-200KB)
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+              resolve(dataUrl);
+            } else {
+              reject(new Error("Canvas context not available"));
+            }
+          };
+
+          img.onerror = (e) => reject(e);
+
+          reader.readAsDataURL(file);
+        });
+      };
+
+      const compressedBase64 = await compressImage(file);
+
+      // Calculate optimized size for debug/verification
+      const approxSizeVal = Math.round((compressedBase64.length * 3) / 4 / 1024);
+      console.log(`Original: ${Math.round(file.size / 1024)}KB, Optimized: ${approxSizeVal}KB`);
+
+      setSlipImage(compressedBase64);
+      toast.dismiss(toastId);
+      toast.success(`อัปโหลดสลิปเรียบร้อย (ขนาด: ${approxSizeVal}KB)`);
+
+    } catch (error) {
+      console.error("Image processing error:", error);
+      toast.dismiss(toastId);
+      toast.error("เกิดข้อผิดพลาดในการประมวลผลรูปภาพ");
+    }
   };
 
   const handleVerifySlip = async () => {
