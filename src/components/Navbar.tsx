@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, Cat, User, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
@@ -18,11 +18,32 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const navigate = useNavigate();
+  const isLoggingOut = useRef(false);
 
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // Handle Token Refresh
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('Session token refreshed');
+        }
+
+        // Handle Session Expiry (Auto Logout)
+        if (event === 'SIGNED_OUT') {
+          if (!isLoggingOut.current) {
+
+
+            // Only show if we lose an active session
+            if (user) {
+              toast.error("หมดเวลาการใช้งาน กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
+              navigate("/login");
+            }
+          }
+          // Reset for next time (though usually we navigate away)
+          isLoggingOut.current = false;
+        }
+
         setUser(session?.user ?? null);
       }
     );
@@ -33,15 +54,33 @@ const Navbar = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [user, navigate]);
 
   const handleLogout = async () => {
     try {
+      isLoggingOut.current = true; // Mark as manual logout
       await supabase.auth.signOut();
+
+      // Explicitly clear Supabase tokens from localStorage to ensure clean state
+      // This handles cases where signOut() might leave some artifacts
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('sb-') || key.includes('supabase')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      setUser(null);
       toast.success("ออกจากระบบเรียบร้อย");
       navigate("/");
     } catch (error) {
-      toast.error("เกิดข้อผิดพลาดในการออกจากระบบ");
+      console.error("Logout error:", error);
+      // Force cleanup even on error
+      localStorage.clear();
+      setUser(null);
+      navigate("/");
+    } finally {
+      // Optional: reset flag after a delay if we didn't navigate (but we do)
+      setTimeout(() => { isLoggingOut.current = false; }, 1000);
     }
   };
 
