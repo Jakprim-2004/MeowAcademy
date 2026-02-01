@@ -1,5 +1,5 @@
 import { useState, useEffect, memo } from "react";
-import { Star } from "lucide-react";
+import { Star, ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,25 +30,20 @@ const ReviewCard = memo(({ review }: { review: Review }) => (
 
 ReviewCard.displayName = "ReviewCard";
 
-const ChatReviewCard = memo(({ imageSrc }: { imageSrc: string }) => (
-    <div className="w-[180px] md:w-[220px] aspect-[9/16] flex-shrink-0 mx-4 rounded-xl overflow-hidden border-4 border-white shadow-lg transform-gpu will-change-transform bg-gray-100">
-        <img
-            src={imageSrc}
-            alt="Customer Chat Review"
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-        />
-    </div>
-));
-
 const PaymentSlipCard = memo(({ imageSrc }: { imageSrc: string }) => (
-    <div className="w-[180px] md:w-[220px] aspect-[9/16] flex-shrink-0 mx-4 rounded-xl overflow-hidden border-4 border-white shadow-lg transform-gpu will-change-transform bg-gray-100">
+    <div className="w-[180px] md:w-[220px] aspect-[9/16] flex-shrink-0 mx-4 rounded-xl overflow-hidden border-4 border-white shadow-lg transform-gpu will-change-transform bg-gray-100 relative group">
         <img
             src={imageSrc}
             alt="Customer Payment Slip"
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover transition-transform duration-500 blur-[1.5px] group-hover:scale-105"
             loading="lazy"
         />
+        <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg border border-gray-100 flex items-center gap-1.5 z-10">
+                <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
+                <span className="text-gray-800">Verified</span>
+            </div>
+        </div>
     </div>
 ));
 
