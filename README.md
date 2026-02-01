@@ -1,4 +1,4 @@
-# 🐱 MeowAcademy Re-Design
+# 🐱 MeowAcademy 
 
 Web application for loan and debt management "MeowAcademy" (กยศ. Connect Redesign).
 Built with **React**, **Vite**, **TypeScript**, **Tailwind CSS**, and **Supabase**.
