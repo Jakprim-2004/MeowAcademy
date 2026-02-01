@@ -173,6 +173,7 @@ const Register = () => {
     name: "",
     citizenId: "",
     gysPassword: "",
+    studentId: "",
   });
 
   // For hourly service
@@ -231,6 +232,11 @@ const Register = () => {
       return false;
     }
 
+    if (includeDataEntry && (!formData.studentId || formData.studentId.length !== 10)) {
+      toast.error("กรุณากรอกรหัสนิสิตให้ครบ 10 หลัก");
+      return false;
+    }
+
     const cleanCitizenId = formData.citizenId.replace(/-/g, '');
     if (cleanCitizenId.length !== 13) {
       toast.error("เลขบัตรประชาชนไม่ถูกต้อง");
@@ -251,6 +257,12 @@ const Register = () => {
       if (user) {
         const lineUserId = user.user_metadata?.line_user_id || null;
 
+        // Append Student ID to notes if provided
+        let notesText = `รหัสผ่าน กยศ: ${formData.gysPassword}`;
+        if (includeDataEntry && formData.studentId) {
+          notesText += `\nรหัสนิสิต: ${formData.studentId}`;
+        }
+
         const { data: orderData, error: orderError } = await supabase.from('orders').insert({
           user_id: user.id,
           service_type: type,
@@ -260,7 +272,7 @@ const Register = () => {
           total_price: totalPrice,
           customer_name: formData.name,
           citizen_id: cleanCitizenId,
-          notes: `รหัสผ่าน กยศ: ${formData.gysPassword}`,
+          notes: notesText,
           status: 'pending',
           line_user_id: lineUserId,
         }).select('id').single();
@@ -282,7 +294,7 @@ const Register = () => {
                 serviceName: currentService.title,
                 totalPrice: totalPrice,
                 citizenId: cleanCitizenId,
-                notes: `รหัสผ่าน: ${formData.gysPassword}`,
+                notes: notesText,
               },
             });
           } catch (err) {
@@ -572,7 +584,7 @@ const Register = () => {
 
               {/* Add-on: Data Entry Service (for hourly and package) */}
               {(type === "hourly" || type === "package") && (
-                <div className="rounded-3xl bg-card border border-border p-6">
+                <div className="space-y-4">
                   <div
                     className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all ${includeDataEntry
                       ? 'bg-primary/10 border-2 border-primary'
@@ -599,6 +611,8 @@ const Register = () => {
                       +฿{serviceTypes.system.price}
                     </Badge>
                   </div>
+
+
                 </div>
               )}
 
@@ -652,6 +666,28 @@ const Register = () => {
                     required
                   />
                 </div>
+
+                {/* Student ID - Only if data entry is selected */}
+                {includeDataEntry && (
+                  <div className="space-y-2 animate-fade-in-up">
+                    <Label htmlFor="studentId" className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-primary" />
+                      รหัสนิสิต / นักศึกษา (10 หลัก)
+                    </Label>
+                    <Input
+                      id="studentId"
+                      placeholder="กรอกรหัสนิสิต 10 หลัก"
+                      value={formData.studentId || ""}
+                      maxLength={10}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setFormData({ ...formData, studentId: value });
+                      }}
+                      className="h-12 rounded-xl border-primary/30 focus:border-primary"
+                      required
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Summary & Payment */}
