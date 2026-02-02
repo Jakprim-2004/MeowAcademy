@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Star, Cat, Send, Home } from "lucide-react";
+import { Star, Send, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -104,8 +104,8 @@ const RateReview = () => {
                 {/* Header */}
                 <div className="text-center mb-8">
                     <Link to="/" className="inline-flex items-center gap-2 mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-hero-gradient flex items-center justify-center shadow-glow">
-                            <Cat className="w-7 h-7 text-primary-foreground" />
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-glow">
+                            <img src="/images/cat-icons/logo_cat.png" alt="MeowAcademy Logo" className="w-full h-full object-contain drop-shadow-md" />
                         </div>
                     </Link>
                     <h1 className="text-2xl font-bold text-foreground">

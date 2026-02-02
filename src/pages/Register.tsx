@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Cat, ArrowLeft, User, CreditCard, Lock, QrCode, Plus, Minus, FileText, Check, Upload, Loader2, CheckCircle, Building, Smartphone, Copy, CheckCheck } from "lucide-react";
+import { ArrowLeft, User, CreditCard, Lock, QrCode, Plus, Minus, FileText, Check, Upload, Loader2, CheckCircle, Building, Smartphone, Copy, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -505,8 +505,8 @@ const Register = () => {
           {/* Header */}
           <div className="text-center mb-10 animate-fade-in">
             <Link to="/" className="inline-flex items-center gap-2 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-hero-gradient flex items-center justify-center shadow-glow">
-                <Cat className="w-7 h-7 text-primary-foreground" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-glow">
+                <img src="/images/cat-icons/logo_cat.png" alt="MeowAcademy Logo" className="w-full h-full object-contain drop-shadow-md" />
               </div>
               <span className="text-2xl font-bold text-gradient">MeowAcademy</span>
             </Link>

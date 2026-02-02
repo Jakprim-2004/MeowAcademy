@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Cat, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -142,8 +142,8 @@ const Login = () => {
         {/* Logo */}
         <div className="text-center mb-10">
           <Link to="/" className="inline-flex items-center gap-2">
-            <div className="w-14 h-14 rounded-xl bg-hero-gradient flex items-center justify-center shadow-glow">
-              <Cat className="w-8 h-8 text-primary-foreground" />
+            <div className="w-14 h-14 rounded-xl flex items-center justify-center shadow-glow">
+              <img src="/images/cat-icons/logo_cat.png" alt="MeowAcademy Logo" className="w-full h-full object-contain drop-shadow-md" />
             </div>
             <span className="text-3xl font-bold text-gradient">MeowAcademy</span>
           </Link>

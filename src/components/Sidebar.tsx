@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Cat, Home, LayoutDashboard, Package, FileText, User as UserIcon, LogOut } from "lucide-react";
+import { Home, LayoutDashboard, Package, FileText, User as UserIcon, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,8 +56,8 @@ const Sidebar = ({ className }: SidebarProps) => {
             {/* Logo */}
             <div className="p-6 border-b border-border">
                 <Link to="/" className="flex items-center gap-2 group">
-                    <div className="w-10 h-10 rounded-xl bg-hero-gradient flex items-center justify-center shadow-glow group-hover:animate-wiggle transition-all">
-                        <Cat className="w-6 h-6 text-primary-foreground" />
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-glow group-hover:animate-wiggle transition-all">
+                        <img src="/images/cat-icons/logo_cat.png" alt="MeowAcademy Logo" className="w-full h-full object-contain drop-shadow-md" />
                     </div>
                     <span className="text-xl font-bold text-gradient">MeowAcademy</span>
                 </Link>

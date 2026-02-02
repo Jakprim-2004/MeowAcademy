@@ -1,10 +1,34 @@
 import { ArrowRight, Sparkles, Clock, Users, Shield } from "lucide-react";
 import { Button } from "./ui/button";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import catMascot from "@/assets/cat-mascot.png";
 
 const HeroSection = () => {
+  const [totalOrders, setTotalOrders] = useState(82);
+
+  // ดึงจำนวน orders จากฐานข้อมูล
+  useEffect(() => {
+    const fetchTotalOrders = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_total_orders' as any);
+        if (error) throw error;
+        
+        const count = data as unknown as number;
+        if (typeof count === 'number') {
+          setTotalOrders(82 + count);
+        }
+      } catch (error) {
+        console.error("Error counting orders:", error);
+        setTotalOrders(82);
+      }
+    };
+    
+    fetchTotalOrders();
+  }, []);
+
   const stats = [
-    { value: "82+", label: "ลูกค้าที่ใช้บริการ", icon: Users },
+    { value: `${totalOrders}+`, label: "ลูกค้าที่ใช้บริการ", icon: Users },
     { value: "100%", label: "รับรองผลงาน", icon: Shield },
     { value: "24/7", label: "พร้อมให้บริการ", icon: Clock },
   ];

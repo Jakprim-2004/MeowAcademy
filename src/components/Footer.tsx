@@ -1,4 +1,4 @@
-import { Cat, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
@@ -8,8 +8,8 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-hero-gradient flex items-center justify-center">
-              <Cat className="w-6 h-6 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center">
+              <img src="/images/cat-icons/logo_cat.png" alt="MeowAcademy Logo" className="w-full h-full object-contain drop-shadow-md" />
             </div>
             <span className="text-xl font-bold text-gradient">MeowAcademy</span>
           </Link>

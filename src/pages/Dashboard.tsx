@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Cat, LogOut, User, FileText, MessageCircle, Loader2, Home } from "lucide-react";
+import { LogOut, User, FileText, MessageCircle, Loader2, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -79,8 +79,8 @@ const Dashboard = () => {
       <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-hero-gradient flex items-center justify-center shadow-glow">
-              <Cat className="w-6 h-6 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-glow">
+              <img src="/images/cat-icons/logo_cat.png" alt="MeowAcademy Logo" className="w-full h-full object-contain drop-shadow-md" />
             </div>
             <span className="text-xl font-bold text-gradient">MeowAcademy</span>
           </div>

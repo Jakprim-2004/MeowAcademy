@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Cat, ArrowLeft, Clock, CheckCircle, XCircle, Loader2, Package, FileText, RefreshCw, ChevronLeft, ChevronRight, CreditCard, Receipt, User, LogOut, Home, LayoutDashboard } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, XCircle, Loader2, Package, FileText, RefreshCw, ChevronLeft, ChevronRight, CreditCard, Receipt, User, LogOut, Home, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -172,8 +172,8 @@ const OrderStatus = () => {
         {/* Mobile Header */}
         <header className="md:hidden border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50 px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-hero-gradient flex items-center justify-center shadow-glow">
-              <Cat className="w-5 h-5 text-primary-foreground" />
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center shadow-glow">
+              <img src="/images/cat-icons/logo_cat.png" alt="MeowAcademy Logo" className="w-full h-full object-contain drop-shadow-md" />
             </div>
             <span className="font-bold text-gradient">MeowAcademy</span>
           </Link>
