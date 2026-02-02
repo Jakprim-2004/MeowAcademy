@@ -4,6 +4,8 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import Logo from "@/components/Logo";
+import BackgroundDecorations from "@/components/BackgroundDecorations";
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -133,19 +135,13 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       {/* Background */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-      </div>
+      <BackgroundDecorations variant="minimal" />
 
       <div className="w-full max-w-md animate-fade-in">
         {/* Logo */}
         <div className="text-center mb-10">
-          <Link to="/" className="inline-flex items-center gap-2">
-            <div className="w-14 h-14 rounded-xl flex items-center justify-center shadow-glow">
-              <img src="/images/cat-icons/logo_cat.png" alt="MeowAcademy Logo" className="w-full h-full object-contain drop-shadow-md" />
-            </div>
-            <span className="text-3xl font-bold text-gradient">MeowAcademy</span>
+          <Link to="/" className="inline-flex items-center gap-2 justify-center">
+            <Logo size="lg" />
           </Link>
           <h1 className="text-2xl font-bold text-foreground mt-6 mb-2">
             เข้าสู่ระบบ

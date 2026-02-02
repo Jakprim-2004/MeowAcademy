@@ -1,20 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Clock, CheckCircle, XCircle, Loader2, Package, FileText, RefreshCw, ChevronLeft, ChevronRight, CreditCard, Receipt, User, LogOut, Home, LayoutDashboard } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, XCircle, Loader2, Package, FileText, RefreshCw, ChevronLeft, ChevronRight, CreditCard, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import Sidebar from "@/components/Sidebar";
+import UserDropdown from "@/components/UserDropdown";
+import BackgroundDecorations from "@/components/BackgroundDecorations";
+import Logo from "@/components/Logo";
 
 interface Order {
   id: string;
@@ -142,25 +138,10 @@ const OrderStatus = () => {
     });
   };
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      localStorage.clear();
-      sessionStorage.clear();
-      toast.success("ออกจากระบบเรียบร้อย");
-      navigate("/login");
-    } catch (error) {
-      toast.error("เกิดข้อผิดพลาดในการออกจากระบบ");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background flex">
       {/* Background */}
-      <div className="fixed inset-0 -z-10 pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-      </div>
+      <BackgroundDecorations variant="minimal" />
 
       {/* Sidebar (Desktop) */}
       <div className="hidden md:block w-72 fixed inset-y-0 left-0 z-50">
@@ -172,54 +153,11 @@ const OrderStatus = () => {
         {/* Mobile Header */}
         <header className="md:hidden border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50 px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center shadow-glow">
-              <img src="/images/cat-icons/logo_cat.png" alt="MeowAcademy Logo" className="w-full h-full object-contain drop-shadow-md" />
-            </div>
-            <span className="font-bold text-gradient">MeowAcademy</span>
+            <Logo size="sm" showText={true} />
           </Link>
 
           {/* Mobile Profile Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2 px-2 py-1 h-auto rounded-full border border-border hover:bg-secondary/50">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage src={user?.user_metadata?.avatar_url} />
-                  <AvatarFallback className="bg-muted">
-                    <User className="w-4 h-4" />
-                  </AvatarFallback>
-                </Avatar>
-                <span className="font-medium text-sm text-foreground max-w-[80px] truncate">
-                  {user?.user_metadata?.full_name || "User"}
-                </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 p-2 bg-background border border-border shadow-lg">
-              <div className="flex items-center gap-3 px-2 py-3 border-b border-border mb-2">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={user?.user_metadata?.avatar_url} />
-                  <AvatarFallback className="bg-muted">
-                    <User className="w-5 h-5" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="font-medium text-foreground">{user?.user_metadata?.full_name || "User"}</span>
-                  <span className="text-xs text-muted-foreground">LINE Account</span>
-                </div>
-              </div>
-              <DropdownMenuItem onClick={() => navigate("/")} className="cursor-pointer gap-2">
-                <Home className="w-4 h-4" />
-                <span>หน้าหลัก</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/dashboard")} className="cursor-pointer gap-2">
-                <LayoutDashboard className="w-4 h-4" />
-                <span>Dashboard</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer gap-2 text-red-500 focus:text-red-500">
-                <LogOut className="w-4 h-4" />
-                <span>ออกจากระบบ</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {user && <UserDropdown user={user} />}
         </header>
 
         {/* Content Area */}
@@ -331,30 +269,6 @@ const OrderStatus = () => {
                           </span>
                         </div>
                       </div>
-
-                      {/* Show payment proof for paid/completed orders */}
-                      {order.payment_proof_url && (order.status === 'paid' || order.status === 'processing' || order.status === 'completed') && (
-                        <div className="mt-4 pt-3 border-t border-border">
-                          <div className="flex items-center gap-3">
-                            <Receipt className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">หลักฐานการชำระเงิน:</span>
-                            <a
-                              href={order.payment_proof_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <img
-                                src={order.payment_proof_url}
-                                alt="สลิปการชำระเงิน"
-                                className="w-12 h-12 object-cover rounded border hover:opacity-80 transition-opacity"
-                              />
-                              <span className="text-sm text-primary hover:underline">ดูสลิป</span>
-                            </a>
-                          </div>
-                        </div>
-                      )}
 
                       {/* Show "ชำระเงิน" button for pending orders */}
                       {isPending && (

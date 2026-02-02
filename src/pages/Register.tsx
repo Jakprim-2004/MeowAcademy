@@ -904,6 +904,17 @@ const Register = () => {
                       <p className="text-sm text-muted-foreground">
                         หลังโอนเงินแล้ว กรุณาอัปโหลดสลิปเพื่อยืนยันการชำระเงิน
                       </p>
+                      <p className="text-sm text-primary mt-2">
+                        หรือส่งสลิปผ่าน{" "}
+                        <a 
+                          href="https://lin.ee/yourlineoa" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="underline font-medium hover:opacity-80"
+                        >
+                          LINE OA @807chkoh
+                        </a>
+                      </p>
                     </div>
 
                     {/* Hidden file input */}
@@ -984,16 +995,6 @@ const Register = () => {
                       </p>
                     )}
                   </div>
-
-                  {/* Back to form */}
-                  <Button
-                    variant="ghost"
-                    onClick={() => setShowPayment(false)}
-                    className="w-full"
-                  >
-                    <ArrowLeft className="mr-2 w-4 h-4" />
-                    แก้ไขข้อมูล
-                  </Button>
                 </>
               )}
             </div>

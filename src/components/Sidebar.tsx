@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import Logo from "./Logo";
 
 interface SidebarProps {
     className?: string;
@@ -56,10 +57,7 @@ const Sidebar = ({ className }: SidebarProps) => {
             {/* Logo */}
             <div className="p-6 border-b border-border">
                 <Link to="/" className="flex items-center gap-2 group">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-glow group-hover:animate-wiggle transition-all">
-                        <img src="/images/cat-icons/logo_cat.png" alt="MeowAcademy Logo" className="w-full h-full object-contain drop-shadow-md" />
-                    </div>
-                    <span className="text-xl font-bold text-gradient">MeowAcademy</span>
+                    <Logo size="sm" />
                 </Link>
             </div>
 
