@@ -765,7 +765,7 @@ serve(async (req) => {
                       action: {
                         type: 'uri',
                         label: 'คลิกเพื่อเข้าสู่ระบบ',
-                        uri: `${Deno.env.get('VITE_URL_WEB')?.replace(/\/$/, '') || 'https://meowacademy.vercel.app/'}/login`
+                        uri: 'https://meowacademy.vercel.app/'
                       },
                       margin: 'lg',
                       color: '#f97316',
