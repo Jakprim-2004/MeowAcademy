@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { ArrowLeft, User, CreditCard, Lock, QrCode, Plus, Minus, FileText, Check, Upload, Loader2, CheckCircle, Building, Smartphone, Copy, CheckCheck } from "lucide-react";
+import { ArrowLeft, User, CreditCard, Lock, QrCode, Plus, Minus, FileText, Check, Upload, Loader2, CheckCircle, Building, Smartphone, Copy, CheckCheck, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -171,6 +171,7 @@ const Register = () => {
 
   const [formData, setFormData] = useState({
     name: "",
+    email: "",
     citizenId: "",
     gysPassword: "",
     studentId: "",
@@ -227,8 +228,15 @@ const Register = () => {
   };
 
   const validateForm = () => {
-    if (!formData.name || !formData.citizenId || !formData.gysPassword) {
+    if (!formData.name || !formData.email || !formData.citizenId || !formData.gysPassword) {
       toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
+      return false;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("กรุณากรอกอีเมลให้ถูกต้อง");
       return false;
     }
 
@@ -258,7 +266,7 @@ const Register = () => {
         const lineUserId = user.user_metadata?.line_user_id || null;
 
         // Append Student ID to notes if provided
-        let notesText = `รหัสผ่าน กยศ: ${formData.gysPassword}`;
+        let notesText = `อีเมล: ${formData.email}\nรหัสผ่าน กยศ: ${formData.gysPassword}`;
         if (includeDataEntry && formData.studentId) {
           notesText += `\nรหัสนิสิต: ${formData.studentId}`;
         }
@@ -629,6 +637,23 @@ const Register = () => {
                     placeholder="กรอกชื่อ-นามสกุล"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="h-12 rounded-xl"
+                    required
+                  />
+                </div>
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-primary" />
+                    อีเมล
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="example@email.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="h-12 rounded-xl"
                     required
                   />
