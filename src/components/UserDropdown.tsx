@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, LogOut, Home, LayoutDashboard } from "lucide-react";
+import { User, LogOut, Home, LayoutDashboard, ShieldCheck, Star, Link2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
@@ -8,6 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
 } from "./ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,10 +24,38 @@ interface UserDropdownProps {
 const UserDropdown = ({ user }: UserDropdownProps) => {
   const navigate = useNavigate();
   const isLoggingOut = useRef(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isCheckingRole, setIsCheckingRole] = useState(true);
 
   const userMetadata = user?.user_metadata;
   const displayName = userMetadata?.full_name || "ผู้ใช้งาน";
   const avatarUrl = userMetadata?.avatar_url;
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      try {
+        const { data, error } = await supabase
+          .rpc('has_role', { _user_id: user.id, _role: 'admin' });
+        
+        if (error) {
+          console.error("Error checking admin role:", error);
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(!!data);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        setIsAdmin(false);
+      } finally {
+        setIsCheckingRole(false);
+      }
+    };
+
+    if (user?.id) {
+      checkAdminRole();
+    }
+  }, [user?.id]);
 
   const navLinks = [
     { name: "หน้าหลัก", href: "/", icon: Home },
@@ -87,7 +118,9 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
           </Avatar>
           <div className="flex flex-col">
             <span className="font-medium text-foreground">{displayName}</span>
-            <span className="text-xs text-muted-foreground">LINE Account</span>
+            <span className="text-xs text-muted-foreground">
+              {isAdmin ? "🔴 แอดมิน" : "LINE Account"}
+            </span>
           </div>
         </div>
 
@@ -110,6 +143,47 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
             <span>Dashboard</span>
           </a>
         </DropdownMenuItem>
+
+        {/* Admin Menu - Only for admins */}
+        {isAdmin && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="text-xs text-muted-foreground px-2 py-1">
+                🛠️ เมนูแอดมิน
+              </DropdownMenuLabel>
+              
+              {/* Admin Dashboard */}
+              <DropdownMenuItem asChild>
+                <a href="/admin" className="cursor-pointer flex items-center gap-2 px-2 py-2 rounded-md text-primary">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>จัดการออเดอร์</span>
+                </a>
+              </DropdownMenuItem>
+
+              {/* Review Management */}
+              <DropdownMenuItem asChild>
+                <a href="/admin/reviews" className="cursor-pointer flex items-center gap-2 px-2 py-2 rounded-md text-primary">
+                  <Star className="w-4 h-4" />
+                  <span>จัดการลิงก์รีวิว</span>
+                </a>
+              </DropdownMenuItem>
+
+              {/* Create Review Link Button */}
+              <DropdownMenuItem asChild>
+                <a 
+                  href="/admin/reviews?tab=create" 
+                  className="cursor-pointer flex items-center gap-2 px-2 py-2 rounded-md bg-primary/10 text-primary font-medium"
+                >
+                  <Link2 className="w-4 h-4" />
+                  <span>+ สร้างลิงก์รีวิว</span>
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </>
+        )}
+
+        <DropdownMenuSeparator />
 
         {/* Logout */}
         <DropdownMenuItem
