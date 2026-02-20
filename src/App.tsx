@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import RateReview from "./pages/RateReview";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import ReviewManagement from "./pages/ReviewManagement";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import OrderStatus from "./pages/OrderStatus";
@@ -52,8 +53,10 @@ const App = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/reviews" element={<ReviewManagement />} />
             <Route path="/order-status" element={<OrderStatus />} />
             <Route path="/rate-review/:orderId" element={<RateReview />} />
+            <Route path="/review/:token" element={<RateReview />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

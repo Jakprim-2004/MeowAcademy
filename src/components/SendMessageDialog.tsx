@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -19,6 +19,7 @@ interface SendMessageDialogProps {
   onOpenChange: (open: boolean) => void;
   customerName: string;
   lineUserId: string;
+  defaultMessage?: string;
 }
 
 const SendMessageDialog = ({
@@ -26,9 +27,15 @@ const SendMessageDialog = ({
   onOpenChange,
   customerName,
   lineUserId,
+  defaultMessage = "",
 }: SendMessageDialogProps) => {
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(defaultMessage);
   const [sending, setSending] = useState(false);
+
+  // Update message when defaultMessage changes
+  useEffect(() => {
+    setMessage(defaultMessage);
+  }, [defaultMessage]);
 
   const handleSend = async () => {
     if (!message.trim()) {
