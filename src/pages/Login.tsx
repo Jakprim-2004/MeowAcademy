@@ -43,19 +43,27 @@ const Login = () => {
     setIsLoading(true);
     try {
       const redirectUri = `${window.location.origin}/login`;
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/line-auth?action=callback`;
+      
+      console.log("LINE callback - Code:", code.substring(0, 10) + "...");
+      console.log("LINE callback - URL:", functionUrl);
 
       // Call edge function to exchange code for session
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/line-auth?action=callback`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({ code, redirectUri }),
-        }
-      );
+      const response = await fetch(functionUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ code, redirectUri }),
+      });
+
+      // Check if response is OK
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("LINE callback error:", response.status, errorText);
+        throw new Error(`Server error: ${response.status}`);
+      }
 
       const data = await response.json();
 
@@ -77,7 +85,7 @@ const Login = () => {
       }
     } catch (error: unknown) {
       console.error("LINE login error:", error);
-      const errorMessage = error instanceof Error ? error.message : "เกิดข้อผิดพลาด";
+      const errorMessage = error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการเข้าสู่ระบบ";
       toast.error(errorMessage);
       // Clear the URL params on error
       window.history.replaceState({}, document.title, "/login");
@@ -90,19 +98,27 @@ const Login = () => {
     setIsLoading(true);
     try {
       const redirectUri = `${window.location.origin}/login`;
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/line-auth?action=login-url`;
+      
+      console.log("Calling LINE auth URL:", functionUrl);
+      console.log("Redirect URI:", redirectUri);
 
       // Call edge function to get LINE auth URL
-      const urlResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/line-auth?action=login-url`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({ redirectUri }),
-        }
-      );
+      const urlResponse = await fetch(functionUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ redirectUri }),
+      });
+
+      // Check if response is OK
+      if (!urlResponse.ok) {
+        const errorText = await urlResponse.text();
+        console.error("LINE auth error response:", urlResponse.status, errorText);
+        throw new Error(`Server error: ${urlResponse.status} - ${errorText}`);
+      }
 
       const data = await urlResponse.json();
 
@@ -110,11 +126,15 @@ const Login = () => {
         throw new Error(data.error);
       }
 
+      if (!data.url) {
+        throw new Error("ไม่ได้รับ URL สำหรับเข้าสู่ระบบ LINE");
+      }
+
       // Redirect to LINE login
       window.location.href = data.url;
     } catch (error: unknown) {
       console.error("LINE login error:", error);
-      const errorMessage = error instanceof Error ? error.message : "เกิดข้อผิดพลาด";
+      const errorMessage = error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการเชื่อมต่อกับ LINE";
       toast.error(errorMessage);
       setIsLoading(false);
     }

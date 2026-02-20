@@ -22,10 +22,21 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
+    console.log("LINE_AUTH_DEBUG:", {
+      hasChannelId: !!LINE_LOGIN_CHANNEL_ID,
+      hasChannelSecret: !!LINE_LOGIN_CHANNEL_SECRET,
+      hasSupabaseUrl: !!SUPABASE_URL,
+      hasServiceRoleKey: !!SUPABASE_SERVICE_ROLE_KEY,
+      action: action,
+    });
+
     if (!LINE_LOGIN_CHANNEL_ID || !LINE_LOGIN_CHANNEL_SECRET) {
       console.error("Missing LINE Login credentials");
       return new Response(
-        JSON.stringify({ error: "LINE Login credentials not configured" }),
+        JSON.stringify({ 
+          error: "LINE Login credentials not configured",
+          debug: "Please set LINE_LOGIN_CHANNEL_ID and LINE_LOGIN_CHANNEL_SECRET in Supabase secrets"
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
