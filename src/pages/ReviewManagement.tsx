@@ -199,6 +199,14 @@ const ReviewManagement = () => {
           toast.error("กรุณาสร้างตาราง review_links ใน Supabase ก่อน (ดูคู่มือ)");
           return;
         }
+        // If RLS policy error
+        if (error.code === "42501") {
+          toast.error("ไม่มีสิทธิ์สร้างลิงก์ กรุณาตรวจสอบว่าคุณเป็นแอดมิน และรัน SQL แก้ไข RLS Policy", {
+            duration: 5000,
+          });
+          console.error("RLS Error:", error);
+          return;
+        }
         throw error;
       }
 
