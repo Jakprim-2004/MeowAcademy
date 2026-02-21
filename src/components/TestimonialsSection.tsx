@@ -1,5 +1,5 @@
 import { useState, useEffect, memo } from "react";
-import { Star, ShieldCheck } from "lucide-react";
+import { Star } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,24 +30,7 @@ const ReviewCard = memo(({ review }: { review: Review }) => (
 
 ReviewCard.displayName = "ReviewCard";
 
-const PaymentSlipCard = memo(({ imageSrc }: { imageSrc: string }) => (
-    <div className="w-[180px] md:w-[220px] aspect-[9/16] flex-shrink-0 mx-4 rounded-xl overflow-hidden border-4 border-white shadow-lg transform-gpu will-change-transform bg-gray-100 relative group">
-        <img
-            src={imageSrc}
-            alt="Customer Payment Slip"
-            className="w-full h-full object-cover transition-transform duration-500 blur-[1.5px] group-hover:scale-105"
-            loading="lazy"
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg border border-gray-100 flex items-center gap-1.5 z-10">
-                <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
-                <span className="text-gray-800">Verified</span>
-            </div>
-        </div>
-    </div>
-));
 
-PaymentSlipCard.displayName = "PaymentSlipCard";
 
 
 
@@ -88,12 +71,10 @@ const TestimonialsSection = () => {
 
     const [reviews, setReviews] = useState<Review[]>(mockReviews);
     const [totalOrders, setTotalOrders] = useState(82);
-    const [paymentSlipFiles, setPaymentSlipFiles] = useState<string[]>([]);
 
     useEffect(() => {
         fetchReviews();
         fetchTotalOrders();
-        fetchPaymentSlips();
     }, []);
 
     const fetchReviews = async () => {
@@ -153,69 +134,7 @@ const TestimonialsSection = () => {
         }
     };
 
-    const fetchPaymentSlips = async () => {
-        try {
-            // 1. List root items (Files & Folders)
-            const { data: rootItems, error } = await supabase
-                .storage
-                .from('payment-slips')
-                .list('', {
-                    limit: 20,
-                    offset: 0,
-                    sortBy: { column: 'created_at', order: 'desc' },
-                });
 
-            if (error) {
-                console.error("Error fetching payment slips:", error);
-                return;
-            }
-
-            if (rootItems) {
-                let allImagePaths: string[] = [];
-
-                // 2. Identify Root Files (Images)
-                const rootFiles = rootItems
-                    .filter(item => item.metadata?.mimetype?.startsWith('image/') || item.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
-                    .map(item => item.name);
-
-                allImagePaths = [...rootFiles];
-
-                // 3. Identify Folders (to check for nested slips)
-                // Folders usually don't have a mimetype in metadata
-                const potentialFolders = rootItems.filter(item =>
-                    !item.metadata?.mimetype &&
-                    !item.name.startsWith('.') &&
-                    item.name !== '.emptyFolderPlaceholder'
-                );
-
-                // 4. Fetch content from recent folders (Limit to avoid N+1 explosion)
-                // We check the first 5 folders (newest first due to sort)
-                for (const folder of potentialFolders.slice(0, 5)) {
-                    const { data: folderFiles } = await supabase
-                        .storage
-                        .from('payment-slips')
-                        .list(folder.name, {
-                            limit: 5,
-                            sortBy: { column: 'created_at', order: 'desc' }
-                        });
-
-                    if (folderFiles && folderFiles.length > 0) {
-                        const folderImages = folderFiles
-                            .filter(f => f.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
-                            .map(f => `${folder.name}/${f.name}`);
-
-                        allImagePaths = [...allImagePaths, ...folderImages];
-                    }
-                }
-
-                // 5. Update State
-                // Slice to keep the UI clean
-                setPaymentSlipFiles(allImagePaths.slice(0, 20));
-            }
-        } catch (error) {
-            console.error("Error in fetchPaymentSlips:", error);
-        }
-    };
 
     // Calculate split points for 2 rows
     const midPoint = Math.ceil(reviews.length / 2);
@@ -277,19 +196,7 @@ const TestimonialsSection = () => {
                     </div>
                 </div>
 
-                {/* Row 3: Chat Screenshots / Payment Slips */}
-                {paymentSlipFiles.length > 0 && (
-                    <div className="flex w-full overflow-hidden pt-8">
-                        <div className="flex animate-scroll w-max" style={{ animationDuration: '60s' }}>
-                            {[...paymentSlipFiles, ...paymentSlipFiles].map((img, i) => (
-                                <PaymentSlipCard
-                                    key={`slip-${i}-${img}`}
-                                    imageSrc={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/payment-slips/${img}`}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
+
             </div>
 
             <div className="container mx-auto px-4 mt-16">
