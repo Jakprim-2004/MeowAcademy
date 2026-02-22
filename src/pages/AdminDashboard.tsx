@@ -536,8 +536,6 @@ const AdminDashboard = () => {
                   </div>
 
                   <div className="pt-2 border-t border-border/50">
-                    <h4 className="font-semibold text-sm text-muted-foreground mb-2">🔑 รหัสผ่าน / หมายเหตุ</h4>
-                    
                     {viewOrder.notes ? (
                       (() => {
                         // Parse notes into fields
