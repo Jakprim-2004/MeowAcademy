@@ -536,31 +536,74 @@ const AdminDashboard = () => {
                   </div>
 
                   <div className="pt-2 border-t border-border/50">
-                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">🔑 รหัสผ่าน / หมายเหตุ</h4>
-                    <div className="flex items-start gap-2">
-                      <div className="bg-background/50 rounded px-3 py-2 text-sm font-mono break-all border flex-1 relative min-h-[38px] flex items-center">
-                        {viewOrder.notes ? (
-                          viewOrder.notes
-                        ) : (
-                          <span className="text-muted-foreground italic text-xs">- ไม่ได้ระบุ -</span>
-                        )}
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-2">🔑 รหัสผ่าน / หมายเหตุ</h4>
+                    
+                    {viewOrder.notes ? (
+                      (() => {
+                        // Parse notes into fields
+                        const parseNotes = (notes: string) => {
+                          const fields: { label: string; value: string }[] = [];
+                          
+                          // Email pattern: อีเมล: xxx
+                          const emailMatch = notes.match(/อีเมล[:\s]+([^\s]+@[^\s]+)/);
+                          if (emailMatch) {
+                            fields.push({ label: "อีเมล", value: emailMatch[1].trim() });
+                          }
+                          
+                          // Password pattern: รหัสผ่าน กย ศ: xxx หรือ รหัสผ่านกยศ: xxx หรือ รหัสผ่าน: xxx
+                          const passwordMatch = notes.match(/รหัสผ่าน(?:\s*กย\s*ศ)?[:\s]+(\S+)/);
+                          if (passwordMatch) {
+                            fields.push({ label: "รหัสผ่าน กยศ", value: passwordMatch[1].trim() });
+                          }
+                          
+                          // Card ID pattern: รหัสบัตร: xxx
+                          const cardMatch = notes.match(/รหัสบัตร[:\s]+(\d+)/);
+                          if (cardMatch) {
+                            fields.push({ label: "รหัสบัตร", value: cardMatch[1].trim() });
+                          }
+                          
+                          // If no patterns matched, treat entire notes as a single field
+                          if (fields.length === 0) {
+                            fields.push({ label: "หมายเหตุ", value: notes });
+                          }
+                          
+                          return fields;
+                        };
+                        
+                        const fields = parseNotes(viewOrder.notes);
+                        
+                        return (
+                          <div className="space-y-2">
+                            {fields.map((field, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                <div className="flex-1">
+                                  <div className="text-xs text-muted-foreground mb-0.5">{field.label}</div>
+                                  <div className="bg-background/50 rounded px-3 py-1.5 text-sm font-mono border">
+                                    {field.value}
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 hover:bg-background border mt-4"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(field.value);
+                                    toast.success(`คัดลอก${field.label}แล้ว`);
+                                  }}
+                                  title={`คัดลอก${field.label}`}
+                                >
+                                  <Copy className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <div className="bg-background/50 rounded px-3 py-2 text-sm border">
+                        <span className="text-muted-foreground italic text-xs">- ไม่ได้ระบุ -</span>
                       </div>
-
-                      {viewOrder.notes && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 hover:bg-background border"
-                          onClick={() => {
-                            navigator.clipboard.writeText(viewOrder.notes || "");
-                            toast.success("คัดลอกแล้ว");
-                          }}
-                          title="คัดลอก"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
 
