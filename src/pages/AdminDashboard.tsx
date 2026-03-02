@@ -554,6 +554,12 @@ const AdminDashboard = () => {
                             fields.push({ label: "รหัสผ่าน กยศ", value: passwordMatch[1].trim() });
                           }
                           
+                          // Student ID pattern: รหัสนิสิต: xxx
+                          const studentIdMatch = notes.match(/รหัสนิสิต[:\s]+(\S+)/);
+                          if (studentIdMatch) {
+                            fields.push({ label: "รหัสนิสิต", value: studentIdMatch[1].trim() });
+                          }
+
                           // Card ID pattern: รหัสบัตร: xxx
                           const cardMatch = notes.match(/รหัสบัตร[:\s]+(\d+)/);
                           if (cardMatch) {
