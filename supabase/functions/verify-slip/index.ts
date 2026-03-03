@@ -15,15 +15,8 @@ serve(async (req) => {
   }
 
   try {
-    const SLIPOK_API_KEY = Deno.env.get('SLIPOK_API_KEY');
-    const SLIPOK_BRANCH_ID = Deno.env.get('SLIPOK_BRANCH_ID');
-    if (!SLIPOK_API_KEY) {
-      throw new Error('SLIPOK_API_KEY is not configured');
-    }
-    if (!SLIPOK_BRANCH_ID) {
-      throw new Error('SLIPOK_BRANCH_ID is not configured');
-    }
-    const SLIPOK_VERIFY_URL = `https://api.slipok.com/api/line/apikey/${SLIPOK_BRANCH_ID}`;
+    const SLIPOK_API_KEY = 'SLIPOK3IHME1K';
+    const SLIPOK_VERIFY_URL = 'https://api.slipok.com/api/line/apikey/61807';
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -39,7 +32,7 @@ serve(async (req) => {
     if (!orderId || !imageBase64) {
       return new Response(
         JSON.stringify({ success: false, error: 'Missing required fields: orderId, imageBase64' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -64,19 +57,44 @@ serve(async (req) => {
     }
 
     // Call SlipOK API to verify the slip
-    const verifyResponse = await fetch(SLIPOK_VERIFY_URL, {
-      method: 'POST',
-      headers: {
-        'x-authorization': SLIPOK_API_KEY,
-      },
-      body: formData,
-    });
+    console.log('Calling SlipOK API:', SLIPOK_VERIFY_URL);
+    let verifyResponse;
+    let verifyResult;
+    try {
+      verifyResponse = await fetch(SLIPOK_VERIFY_URL, {
+        method: 'POST',
+        headers: {
+          'x-authorization': SLIPOK_API_KEY,
+        },
+        body: formData,
+      });
 
-    const verifyResult = await verifyResponse.json();
+      const responseText = await verifyResponse.text();
+      console.log('SlipOK raw response status:', verifyResponse.status, 'body:', responseText);
+
+      try {
+        verifyResult = JSON.parse(responseText);
+      } catch (_parseErr) {
+        return new Response(
+          JSON.stringify({ success: false, error: `SlipOK API returned invalid JSON: ${responseText.substring(0, 200)}` }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch (fetchErr) {
+      console.error('SlipOK fetch error:', fetchErr);
+      return new Response(
+        JSON.stringify({ success: false, error: `ไม่สามารถเชื่อมต่อ SlipOK API: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}` }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('SlipOK verify response:', JSON.stringify(verifyResult));
 
     if (!verifyResponse.ok) {
-      throw new Error(verifyResult.message || `SlipOK API error: ${verifyResponse.status}`);
+      return new Response(
+        JSON.stringify({ success: false, error: verifyResult.message || `SlipOK API error: ${verifyResponse.status}`, slipokCode: verifyResult.code }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // SlipOK returns { success: boolean, code: number, message: string, data: {...} }
@@ -96,7 +114,7 @@ serve(async (req) => {
           error: 'สลิปนี้ถูกใช้ไปแล้ว กรุณาใช้สลิปใหม่',
           isDuplicate: true
         }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -106,7 +124,7 @@ serve(async (req) => {
           success: false,
           error: 'สลิปไม่ถูกต้องหรือเป็นสลิปปลอม กรุณาใช้สลิปจริง',
         }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -117,7 +135,7 @@ serve(async (req) => {
           error: 'บัญชีผู้รับไม่ตรงกัน กรุณาโอนเงินไปยังบัญชีที่ถูกต้อง',
           verificationData: verifyResult.data
         }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -128,7 +146,7 @@ serve(async (req) => {
           error: verifyResult.message || 'สลิปไม่ถูกต้อง กรุณาตรวจสอบและลองใหม่อีกครั้ง',
           verificationData: verifyResult.data
         }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -187,7 +205,7 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

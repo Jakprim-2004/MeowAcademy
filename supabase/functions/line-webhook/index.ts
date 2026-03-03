@@ -107,8 +107,8 @@ serve(async (req) => {
     const LINE_MESSAGING_CHANNEL_ACCESS_TOKEN = Deno.env.get('LINE_MESSAGING_CHANNEL_ACCESS_TOKEN')?.trim();
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const SLIPOK_API_KEY = Deno.env.get('SLIPOK_API_KEY')?.trim();
-    const SLIPOK_BRANCH_ID = Deno.env.get('SLIPOK_BRANCH_ID')?.trim();
+    const SLIPOK_API_KEY = 'SLIPOK3IHME1K';
+    const SLIPOK_BRANCH_ID = '61807';
 
     if (!LINE_MESSAGING_CHANNEL_SECRET || !LINE_MESSAGING_CHANNEL_ACCESS_TOKEN) {
       console.error('Missing LINE credentials - MESSAGING_SECRET:', !!LINE_MESSAGING_CHANNEL_SECRET, 'ACCESS_TOKEN:', !!LINE_MESSAGING_CHANNEL_ACCESS_TOKEN);
@@ -211,7 +211,7 @@ serve(async (req) => {
 
         // Verify slip with SlipOK
         if (!SLIPOK_API_KEY) {
-          console.error('SLIPOK_API_KEY not configured');
+          console.error('SLIPOK_API_KEY not configured (should not happen)');
           await replyMessage(event.replyToken!, LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, [
             {
               type: 'text',
