@@ -55,6 +55,7 @@ serve(async (req) => {
       lineAuthUrl.searchParams.set("state", state);
       lineAuthUrl.searchParams.set("scope", "profile openid email");
       lineAuthUrl.searchParams.set("nonce", nonce);
+      lineAuthUrl.searchParams.set("bot_prompt", "aggressive");
 
       console.log("Generated LINE auth URL for redirect:", redirectUri);
 

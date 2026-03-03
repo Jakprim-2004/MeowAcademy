@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { ArrowLeft, User, CreditCard, Lock, QrCode, Plus, Minus, FileText, Check, Upload, Loader2, CheckCircle, Building, Smartphone, Copy, CheckCheck, Mail } from "lucide-react";
+import { ArrowLeft, User, CreditCard, Lock, QrCode, Plus, Minus, FileText, Check, Building, Smartphone, Copy, CheckCheck, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -112,8 +112,6 @@ const Register = () => {
         });
         setQrCodeData(qrDataUrl);
         setShowPayment(true);
-        setSlipImage(null);
-        setPaymentVerified(false);
       }
     } catch (error) {
       console.error("Error generating QR:", error);
@@ -185,12 +183,6 @@ const Register = () => {
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
-
-  // Slip upload states
-  const [slipImage, setSlipImage] = useState<string | null>(null);
-  const [isVerifyingSlip, setIsVerifyingSlip] = useState(false);
-  const [paymentVerified, setPaymentVerified] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Calculate total price (use existing order price if available)
   const totalPrice = useMemo(() => {
@@ -334,8 +326,6 @@ const Register = () => {
         });
         setQrCodeData(qrDataUrl);
         setShowPayment(true);
-        setSlipImage(null);
-        setPaymentVerified(false);
         toast.success("สร้าง QR Code สำเร็จ!");
       } else {
         throw new Error(data?.error || "ไม่สามารถสร้าง QR Code ได้");
@@ -345,148 +335,6 @@ const Register = () => {
       toast.error("เกิดข้อผิดพลาดในการสร้าง QR Code");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleSlipUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error("กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น");
-      return;
-    }
-
-    // Initial size check (prevent massive files from freezing browser)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("ไฟล์ต้นฉบับใหญ่เกินไป (สูงสุด 10MB)");
-      return;
-    }
-
-    const toastId = toast.loading("กำลังประมวลผลรูปภาพ...");
-
-    try {
-      // Image Compression Logic
-      const compressImage = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          const img = new Image();
-          const reader = new FileReader();
-
-          reader.onload = (e) => {
-            img.src = e.target?.result as string;
-          };
-
-          reader.onerror = (e) => reject(e);
-
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-
-            // Target dimensions (Max 1280px - good balance for readability vs size)
-            const MAX_WIDTH = 1280;
-            const MAX_HEIGHT = 1280;
-
-            if (width > height) {
-              if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
-              }
-            } else {
-              if (height > MAX_HEIGHT) {
-                width *= MAX_HEIGHT / height;
-                height = MAX_HEIGHT;
-              }
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-
-            if (ctx) {
-              // Background white for transparent PNGs converted to JPEG
-              ctx.fillStyle = '#FFFFFF';
-              ctx.fillRect(0, 0, width, height);
-              ctx.drawImage(img, 0, 0, width, height);
-
-              // Compress to JPEG with 0.7 quality (Target ~100-200KB)
-              const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-              resolve(dataUrl);
-            } else {
-              reject(new Error("Canvas context not available"));
-            }
-          };
-
-          img.onerror = (e) => reject(e);
-
-          reader.readAsDataURL(file);
-        });
-      };
-
-      const compressedBase64 = await compressImage(file);
-
-      // Calculate optimized size for debug/verification
-      const approxSizeVal = Math.round((compressedBase64.length * 3) / 4 / 1024);
-      console.log(`Original: ${Math.round(file.size / 1024)}KB, Optimized: ${approxSizeVal}KB`);
-
-      setSlipImage(compressedBase64);
-      toast.dismiss(toastId);
-      toast.success(`อัปโหลดสลิปเรียบร้อย (ขนาด: ${approxSizeVal}KB)`);
-
-    } catch (error) {
-      console.error("Image processing error:", error);
-      toast.dismiss(toastId);
-      toast.error("เกิดข้อผิดพลาดในการประมวลผลรูปภาพ");
-    }
-  };
-
-  const handleVerifySlip = async () => {
-    if (!slipImage || !currentOrderId) {
-      toast.error("กรุณาอัปโหลดสลิปก่อน");
-      return;
-    }
-
-    setIsVerifyingSlip(true);
-    try {
-      // Extract base64 data (remove data:image/xxx;base64, prefix)
-      const base64Data = slipImage.split(',')[1];
-
-      const { data, error } = await supabase.functions.invoke('verify-slip', {
-        body: {
-          orderId: currentOrderId,
-          imageBase64: base64Data,
-          expectedAmount: totalPrice.toString(),
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.success) {
-        setPaymentVerified(true);
-        toast.success(data.message || "ตรวจสอบสลิปสำเร็จ! การชำระเงินได้รับการยืนยันแล้ว", {
-          duration: 5000,
-        });
-      } else {
-        // Show specific error messages
-        if (data?.isDuplicate) {
-          toast.error("❌ สลิปนี้ถูกใช้ไปแล้ว กรุณาใช้สลิปใหม่", {
-            duration: 5000,
-            description: "สลิปแต่ละใบสามารถใช้ได้เพียงครั้งเดียว",
-          });
-        } else {
-          toast.error(data?.error || "ไม่สามารถตรวจสอบสลิปได้", {
-            duration: 5000,
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error verifying slip:", error);
-      toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง", {
-        duration: 5000,
-      });
-    } finally {
-      setIsVerifyingSlip(false);
     }
   };
 
@@ -779,39 +627,6 @@ const Register = () => {
           ) : (
             /* Payment Section */
             <div className="space-y-6 animate-fade-in-up">
-              {paymentVerified ? (
-                /* Payment Success */
-                <div className="rounded-3xl bg-card border-2 border-primary p-8 shadow-sm space-y-6">
-                  <div className="text-center space-y-4">
-                    <div className="w-20 h-20 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
-                      <CheckCircle className="w-12 h-12 text-primary" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-foreground">ชำระเงินสำเร็จ!</h2>
-                    <p className="text-muted-foreground">
-                      การชำระเงินของคุณได้รับการยืนยันแล้ว<br />
-                      เราจะดำเนินการตามคำสั่งซื้อของคุณ
-                    </p>
-                    <div className="pt-4">
-                      <Badge className="bg-primary text-primary-foreground text-base px-4 py-2">
-                        ยอดชำระ ฿{totalPrice.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Link to="/order-status">
-                      <Button className="w-full h-12 bg-hero-gradient hover:opacity-90">
-                        ดูสถานะคำสั่งซื้อ
-                      </Button>
-                    </Link>
-                    <Link to="/">
-                      <Button variant="outline" className="w-full h-12">
-                        กลับหน้าหลัก
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              ) : (
                 <>
                   <div className="rounded-3xl bg-card border border-border p-8 shadow-sm space-y-6">
                     {/* Summary */}
@@ -914,111 +729,47 @@ const Register = () => {
                         </div>
 
                         <p className="text-sm text-muted-foreground text-center">
-                          โอนเงินผ่านแอปธนาคาร หรือ ATM แล้วอัปโหลดสลิปด้านล่าง
+                          โอนเงินผ่านแอปธนาคาร หรือ ATM แล้วส่งสลิปผ่าน LINE
                         </p>
                       </div>
                     )}
                   </div>
 
-                  {/* Slip Upload Section */}
+                  {/* LINE Send Slip Section */}
                   <div className="rounded-3xl bg-card border border-border p-6 shadow-sm space-y-4">
                     <div className="text-center">
                       <h3 className="font-semibold text-foreground mb-2">
-                        อัปโหลดสลิปหลักฐานการโอน
+                        ส่งสลิปผ่าน LINE เพื่อยืนยันการชำระเงิน
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        หลังโอนเงินแล้ว กรุณาอัปโหลดสลิปเพื่อยืนยันการชำระเงิน
-                      </p>
-                      <p className="text-sm text-primary mt-2">
-                        หรือส่งสลิปผ่าน{" "}
-                        <a 
-                          href="https://lin.ee/yourlineoa" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="underline font-medium hover:opacity-80"
-                        >
-                          LINE OA @807chkoh
-                        </a>
+                        หลังโอนเงินแล้ว กรุณาส่งสลิปมาทาง LINE OA เพื่อตรวจสอบอัตโนมัติ
                       </p>
                     </div>
 
-                    {/* Hidden file input */}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleSlipUpload}
-                      className="hidden"
-                    />
+                    <a
+                      href="https://line.me/R/oaMessage/@807chkoh/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-3 w-full h-14 bg-[#06C755] hover:bg-[#05b54d] text-white rounded-2xl text-lg font-semibold transition-colors shadow-lg"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
+                        <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+                      </svg>
+                      ส่งสลิปผ่าน LINE
+                    </a>
 
-                    {/* Upload area */}
-                    {slipImage ? (
-                      <div className="space-y-4">
-                        <div className="relative mx-auto max-w-xs">
-                          <img
-                            src={slipImage}
-                            alt="สลิปการโอนเงิน"
-                            className="w-full rounded-xl border border-border shadow-sm"
-                          />
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="absolute top-2 right-2"
-                            onClick={() => fileInputRef.current?.click()}
-                          >
-                            เปลี่ยนรูป
-                          </Button>
-                        </div>
+                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-2">
+                      <p className="text-sm font-medium text-foreground text-center">วิธีส่งสลิป</p>
+                      <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                        <li>กดปุ่ม "ส่งสลิปผ่าน LINE" ด้านบน</li>
+                        <li>ส่งรูปสลิปการโอนเงินในแชท</li>
+                        <li>ระบบจะตรวจสอบอัตโนมัติ และแจ้งผลทันที</li>
+                      </ol>
+                    </div>
 
-                        <Button
-                          onClick={handleVerifySlip}
-                          disabled={isVerifyingSlip || !currentOrderId}
-                          size="lg"
-                          className="w-full h-14 bg-hero-gradient hover:opacity-90 shadow-glow text-lg font-semibold"
-                        >
-                          {isVerifyingSlip ? (
-                            <span className="flex items-center gap-2">
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                              กำลังตรวจสอบสลิป...
-                            </span>
-                          ) : (
-                            <>
-                              <Check className="mr-2 w-5 h-5" />
-                              ยืนยันการชำระเงิน
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-full p-8 border-2 border-dashed border-border rounded-2xl hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
-                      >
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Upload className="w-8 h-8 text-primary" />
-                          </div>
-                          <div className="text-center">
-                            <p className="font-medium text-foreground">คลิกเพื่ออัปโหลดสลิป</p>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              รองรับไฟล์ JPG, PNG (สูงสุด 5MB)
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    )}
-
-                    {!currentOrderId && user && (
-                      <p className="text-sm text-destructive text-center">
-                        ⚠️ ไม่พบข้อมูลคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง
-                      </p>
-                    )}
-
-                    {!user && (
-                      <p className="text-sm text-destructive text-center">
-                        ⚠️ กรุณาเข้าสู่ระบบเพื่อยืนยันการชำระเงิน
-                      </p>
-                    )}
+                    <p className="text-xs text-muted-foreground text-center">
+                      LINE OA: @807chkoh | ระบบตรวจสอบสลิปอัตโนมัติ 24 ชม.
+                    </p>
                   </div>
                 </>
               )}

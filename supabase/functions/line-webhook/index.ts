@@ -786,20 +786,7 @@ serve(async (req) => {
         }
       }
 
-      // Handle follow event (user adds friend)
-      if (event.type === 'follow') {
-        await replyMessage(event.replyToken!, LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, [
-          {
-            type: 'text',
-            text: '🐱 สวัสดีครับ! ยินดีต้อนรับสู่ MeowAcademy\n\n' +
-              'เราให้บริการเก็บจิตอาสา กยศ. ออนไลน์ที่รวดเร็วและปลอดภัย\n\n' +
-              '🔐 พิมพ์ "ล็อกอิน" - เข้าสู่เว็บไซต์\n' +
-              '📷 ส่งรูปสลิป - ชำระเงินอัตโนมัติ\n' +
-              '📋 พิมพ์ "สถานะ" - ดูสถานะออเดอร์\n\n' +
-              'ขอบคุณที่เลือกใช้บริการเราครับ 💕',
-          },
-        ]);
-      }
+     
 
       // Handle postback event (payment and RATE button click)
       if (event.type === 'postback' && event.postback?.data) {
