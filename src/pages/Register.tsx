@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft, User, CreditCard, Lock, QrCode, Plus, Minus, FileText, Check, Loader2, Building, Smartphone, Copy, CheckCheck, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -173,6 +174,7 @@ const Register = () => {
     citizenId: "",
     gysPassword: "",
     studentId: "",
+    additionalDetails: "",
   });
 
   // For hourly service
@@ -261,6 +263,9 @@ const Register = () => {
         let notesText = `อีเมล: ${formData.email}\nรหัสผ่าน กยศ: ${formData.gysPassword}`;
         if (includeDataEntry && formData.studentId) {
           notesText += `\nรหัสนิสิต: ${formData.studentId}`;
+        }
+        if (formData.additionalDetails.trim()) {
+          notesText += `\nรายละเอียดเพิ่มเติม: ${formData.additionalDetails.trim()}`;
         }
 
         const { data: orderData, error: orderError } = await supabase.from('orders').insert({
@@ -537,6 +542,21 @@ const Register = () => {
                     onChange={(e) => setFormData({ ...formData, gysPassword: e.target.value })}
                     className="h-12 rounded-xl"
                     required
+                  />
+                </div>
+
+                {/* Additional Details */}
+                <div className="space-y-2">
+                  <Label htmlFor="additionalDetails" className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    รายละเอียดเพิ่มเติม
+                  </Label>
+                  <Textarea
+                    id="additionalDetails"
+                    placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)"
+                    value={formData.additionalDetails}
+                    onChange={(e) => setFormData({ ...formData, additionalDetails: e.target.value })}
+                    className="min-h-[100px] rounded-xl resize-none"
                   />
                 </div>
 
