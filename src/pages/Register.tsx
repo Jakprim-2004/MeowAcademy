@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { ArrowLeft, User, CreditCard, Lock, QrCode, Plus, Minus, FileText, Check, Building, Smartphone, Copy, CheckCheck, Mail } from "lucide-react";
+import { ArrowLeft, User, CreditCard, Lock, QrCode, Plus, Minus, FileText, Check, Loader2, Building, Smartphone, Copy, CheckCheck, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -747,7 +747,7 @@ const Register = () => {
                     </div>
 
                     <a
-                      href="https://line.me/R/oaMessage/@807chkoh/"
+                      href="https://line.me/R/oaMessage/@807chkoh/?%E0%B8%AA%E0%B9%88%E0%B8%87%E0%B8%AA%E0%B8%A5%E0%B8%B4%E0%B8%9B%E0%B8%A2%E0%B8%B7%E0%B8%99%E0%B8%A2%E0%B8%B1%E0%B8%99%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%8A%E0%B8%B3%E0%B8%A3%E0%B8%B0%E0%B9%80%E0%B8%87%E0%B8%B4%E0%B8%99"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-3 w-full h-14 bg-[#06C755] hover:bg-[#05b54d] text-white rounded-2xl text-lg font-semibold transition-colors shadow-lg"
