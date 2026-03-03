@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const LINE_CHANNEL_ACCESS_TOKEN = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN');
+    const LINE_CHANNEL_ACCESS_TOKEN = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN') || Deno.env.get('LINE_MESSAGING_CHANNEL_ACCESS_TOKEN');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -27,15 +27,18 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Find pending orders older than 30 minutes that haven't been reminded
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    // Find pending orders older than 23 hours (1 hour before auto-cancel at 24 hours)
+    // that haven't been reminded yet
+    const twentyThreeHoursAgo = new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString();
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const { data: pendingOrders, error: fetchError } = await supabase
       .from('orders')
       .select('*')
       .eq('status', 'pending')
       .eq('reminder_sent', false)
-      .lt('created_at', thirtyMinutesAgo)
+      .lt('created_at', twentyThreeHoursAgo)
+      .gte('created_at', oneDayAgo)
       .not('line_user_id', 'is', null);
 
     if (fetchError) {
@@ -43,7 +46,7 @@ serve(async (req) => {
       throw fetchError;
     }
 
-    console.log(`Found ${pendingOrders?.length || 0} orders to remind`);
+    console.log(`Found ${pendingOrders?.length || 0} orders to send expiry warning`);
 
     let sentCount = 0;
     let failedCount = 0;
@@ -53,7 +56,7 @@ serve(async (req) => {
 
       const priceFormatted = `${order.total_price.toLocaleString()} บาท`;
 
-      // Send reminder via LINE Push Message with Flex Message
+      // Send warning via LINE Push Message with Flex Message
       const pushResponse = await fetch('https://api.line.me/v2/bot/message/push', {
         method: 'POST',
         headers: {
@@ -65,18 +68,18 @@ serve(async (req) => {
           messages: [
             {
               type: 'flex',
-              altText: '⏰ เตือนชำระเงิน - MeowAcademy',
+              altText: '🚨 ออเดอร์กำลังจะหมดอายุใน 1 ชั่วโมง! - MeowAcademy',
               contents: {
                 type: 'bubble',
                 header: {
                   type: 'box',
                   layout: 'vertical',
-                  backgroundColor: '#f59e0b',
+                  backgroundColor: '#ef4444',
                   paddingAll: '15px',
                   contents: [
                     {
                       type: 'text',
-                      text: '⏰ เตือนชำระเงิน',
+                      text: '🚨 ออเดอร์กำลังจะหมดอายุ!',
                       color: '#ffffff',
                       weight: 'bold',
                       size: 'lg',
@@ -96,10 +99,11 @@ serve(async (req) => {
                     },
                     {
                       type: 'text',
-                      text: 'ออเดอร์ของคุณยังรอชำระเงินอยู่นะครับ',
+                      text: '⚠️ ออเดอร์ของคุณจะถูกยกเลิกอัตโนมัติภายใน 1 ชั่วโมง หากยังไม่ชำระเงิน!',
                       size: 'sm',
-                      color: '#888888',
+                      color: '#ef4444',
                       wrap: true,
+                      weight: 'bold',
                     },
                     {
                       type: 'separator',
@@ -132,6 +136,15 @@ serve(async (req) => {
                         { type: 'text', text: order.id.slice(0, 8) + '...', size: 'sm', flex: 2 },
                       ],
                     },
+                    {
+                      type: 'box',
+                      layout: 'horizontal',
+                      margin: 'sm',
+                      contents: [
+                        { type: 'text', text: '⏳ หมดอายุ', size: 'sm', color: '#888888', flex: 1 },
+                        { type: 'text', text: 'อีกประมาณ 1 ชั่วโมง', size: 'sm', color: '#ef4444', weight: 'bold', flex: 2 },
+                      ],
+                    },
                   ],
                 },
                 footer: {
@@ -141,15 +154,15 @@ serve(async (req) => {
                   contents: [
                     {
                       type: 'text',
-                      text: '📷 ส่งรูปสลิปมาได้เลยครับ',
+                      text: '📷 รีบส่งสลิปมาก่อนหมดเวลา!',
                       size: 'sm',
-                      color: '#22c55e',
+                      color: '#ef4444',
                       align: 'center',
                       weight: 'bold',
                     },
                     {
                       type: 'text',
-                      text: 'ระบบจะตรวจสอบอัตโนมัติ',
+                      text: 'ระบบจะยกเลิกออเดอร์อัตโนมัติ',
                       size: 'xs',
                       color: '#aaaaaa',
                       align: 'center',
@@ -178,10 +191,10 @@ serve(async (req) => {
           .eq('id', order.id);
 
         sentCount++;
-        console.log(`Reminder sent for order ${order.id}`);
+        console.log(`Expiry warning sent for order ${order.id}`);
       } else {
         const errorText = await pushResponse.text();
-        console.error(`Failed to send reminder for order ${order.id}:`, errorText);
+        console.error(`Failed to send warning for order ${order.id}:`, errorText);
         failedCount++;
       }
     }
@@ -189,7 +202,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Sent ${sentCount} reminders, ${failedCount} failed`,
+        message: `Sent ${sentCount} expiry warnings, ${failedCount} failed`,
         sentCount,
         failedCount
       }),
