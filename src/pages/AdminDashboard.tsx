@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ShieldCheck, Package, Clock, CheckCircle, XCircle, Loader2, ChevronLeft, ChevronRight, MessageSquare, Eye, Copy } from "lucide-react";
+import { ShieldCheck, Package, Clock, CheckCircle, XCircle, Loader2, ChevronLeft, ChevronRight, MessageSquare, Eye, Copy, Filter } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -64,6 +64,9 @@ const AdminDashboard = () => {
     cancelled: 0,
   });
 
+  // Status filter state
+  const [statusFilter, setStatusFilter] = useState<string>("active");
+
   // Message dialog state
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<{
@@ -78,7 +81,31 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     checkAdminAndFetchOrders();
-  }, [currentPage]);
+  }, [currentPage, statusFilter]);
+
+  // Reset page when filter changes
+  const handleFilterChange = (filter: string) => {
+    setStatusFilter(filter);
+    setCurrentPage(1);
+  };
+
+  // Priority sort: paid → processing → pending → others
+  const statusPriority: Record<string, number> = {
+    paid: 1,
+    processing: 2,
+    pending: 3,
+    completed: 4,
+    cancelled: 5,
+  };
+
+  const sortByPriority = (ordersToSort: Order[]) => {
+    return [...ordersToSort].sort((a, b) => {
+      const priorityA = statusPriority[a.status] ?? 99;
+      const priorityB = statusPriority[b.status] ?? 99;
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  };
 
   const checkAdminAndFetchOrders = async () => {
     try {
@@ -129,23 +156,49 @@ const AdminDashboard = () => {
         setDashboardStats(newStats);
       }
 
-      // Fetch paginated orders for table
+      // Fetch orders based on filter
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
-      const { data: ordersData, error: ordersError } = await supabase
-        .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(from, to);
+      let query = supabase.from("orders").select("*");
 
-      if (ordersError) {
-        console.error("Error fetching orders:", ordersError);
-        toast.error("ไม่สามารถโหลดข้อมูลได้");
-        return;
+      if (statusFilter === "active") {
+        // Show paid, processing, pending with priority sort
+        query = query.in("status", ["paid", "processing", "pending"]);
+        const filteredCount = allOrdersStatus
+          ? allOrdersStatus.filter(o => ["paid", "processing", "pending"].includes(o.status)).length
+          : 0;
+        setTotalCount(filteredCount);
+      } else if (statusFilter !== "all") {
+        // Filter by specific status
+        query = query.eq("status", statusFilter);
+        const filteredCount = allOrdersStatus
+          ? allOrdersStatus.filter(o => o.status === statusFilter).length
+          : 0;
+        setTotalCount(filteredCount);
       }
 
-      setOrders(ordersData || []);
+      query = query.order("created_at", { ascending: false });
+
+      // For "active" filter, fetch all matching then sort client-side and paginate
+      if (statusFilter === "active") {
+        const { data: ordersData, error: ordersError } = await query;
+        if (ordersError) {
+          console.error("Error fetching orders:", ordersError);
+          toast.error("ไม่สามารถโหลดข้อมูลได้");
+          return;
+        }
+        const sorted = sortByPriority(ordersData || []);
+        setOrders(sorted.slice(from, to + 1));
+      } else {
+        const { data: ordersData, error: ordersError } = await query.range(from, to);
+        if (ordersError) {
+          console.error("Error fetching orders:", ordersError);
+          toast.error("ไม่สามารถโหลดข้อมูลได้");
+          return;
+        }
+        setOrders(ordersData || []);
+      }
     } catch (error) {
       console.error("Error:", error);
       toast.error("เกิดข้อผิดพลาด");
@@ -304,12 +357,89 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
+        {/* Status Filter Buttons */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground mr-1">กรองสถานะ:</span>
+          <Button
+            variant={statusFilter === "active" ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleFilterChange("active")}
+            className="gap-1"
+          >
+            <Package className="w-3.5 h-3.5" />
+            งานที่ต้องทำ
+          </Button>
+          <Button
+            variant={statusFilter === "paid" ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleFilterChange("paid")}
+            className="gap-1 border-blue-500/50 hover:bg-blue-500/10"
+          >
+            <CheckCircle className="w-3.5 h-3.5 text-blue-500" />
+            ชำระแล้ว ({stats.paid})
+          </Button>
+          <Button
+            variant={statusFilter === "processing" ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleFilterChange("processing")}
+            className="gap-1 border-purple-500/50 hover:bg-purple-500/10"
+          >
+            <Loader2 className="w-3.5 h-3.5 text-purple-500" />
+            กำลังดำเนินการ ({stats.processing})
+          </Button>
+          <Button
+            variant={statusFilter === "pending" ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleFilterChange("pending")}
+            className="gap-1 border-yellow-500/50 hover:bg-yellow-500/10"
+          >
+            <Clock className="w-3.5 h-3.5 text-yellow-500" />
+            รอชำระเงิน ({stats.pending})
+          </Button>
+          <Button
+            variant={statusFilter === "completed" ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleFilterChange("completed")}
+            className="gap-1 border-green-500/50 hover:bg-green-500/10"
+          >
+            <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+            เสร็จสิ้น ({stats.completed})
+          </Button>
+          <Button
+            variant={statusFilter === "cancelled" ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleFilterChange("cancelled")}
+            className="gap-1 border-red-500/50 hover:bg-red-500/10"
+          >
+            <XCircle className="w-3.5 h-3.5 text-red-500" />
+            ยกเลิก ({stats.cancelled})
+          </Button>
+          <Button
+            variant={statusFilter === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleFilterChange("all")}
+          >
+            ทั้งหมด ({stats.total})
+          </Button>
+        </div>
+
         {/* Orders Table */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="w-5 h-5" />
               รายการคำสั่งซื้อ
+              {statusFilter !== "all" && statusFilter !== "active" && (
+                <Badge variant="secondary" className="ml-2">
+                  {statusConfig[statusFilter as OrderStatus]?.label}
+                </Badge>
+              )}
+              {statusFilter === "active" && (
+                <Badge variant="secondary" className="ml-2">
+                  ชำระแล้ว → กำลังดำเนินการ → รอชำระ
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
