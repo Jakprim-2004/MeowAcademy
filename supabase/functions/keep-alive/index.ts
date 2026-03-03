@@ -38,7 +38,6 @@ serve(async (req) => {
         success: true,
         message: 'Keep-alive ping successful',
         timestamp: now,
-        ordersCount: count,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
