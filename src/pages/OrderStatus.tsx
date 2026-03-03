@@ -20,6 +20,8 @@ interface Order {
   include_data_entry: boolean;
   total_price: number;
   customer_name: string;
+  citizen_id: string;
+  notes: string | null;
   status: 'pending' | 'paid' | 'processing' | 'completed' | 'cancelled';
   created_at: string;
   payment_proof_url: string | null;
@@ -271,6 +273,34 @@ const OrderStatus = () => {
                             ฿{order.total_price.toLocaleString('th-TH')}
                           </span>
                         </div>
+                      </div>
+
+                      {/* รายละเอียดเพิ่มเติม */}
+                      <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">เลขบัตรประชาชน: </span>
+                            <span className="font-mono">
+                              {order.citizen_id.replace(/(\d{1})(\d{4})(\d{5})(\d{2})(\d{1})/, "$1-$2-$3-$4-$5")}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">ประเภท: </span>
+                            <span className="font-medium">
+                              {order.service_type === 'hourly' ? 'รายชั่วโมง' : order.service_type === 'form' ? 'กรอกแบบฟอร์ม' : order.service_type}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">รหัสออเดอร์: </span>
+                            <span className="font-mono text-xs">{order.id.slice(0, 8)}...</span>
+                          </div>
+                        </div>
+                        {order.notes && (
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">📝 หมายเหตุ: </span>
+                            <span className="font-medium">{order.notes}</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Show "ชำระเงิน" button for pending orders */}

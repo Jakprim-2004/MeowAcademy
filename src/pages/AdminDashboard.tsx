@@ -754,10 +754,48 @@ const AdminDashboard = () => {
                         <div>{viewOrder.hours} ชั่วโมง</div>
                       </>
                     )}
+                    {viewOrder.include_data_entry && (
+                      <>
+                        <div className="text-muted-foreground">กรอกข้อมูล:</div>
+                        <div>
+                          <Badge variant="secondary" className="text-xs">รวมกรอกข้อมูล</Badge>
+                        </div>
+                      </>
+                    )}
                     <div className="text-muted-foreground">ราคา:</div>
                     <div className="font-bold text-primary">{formatPrice(viewOrder.total_price)}</div>
+                    <div className="text-muted-foreground">สถานะ:</div>
+                    <div>
+                      <Badge className={`${statusConfig[viewOrder.status as OrderStatus].color} text-white`}>
+                        {statusConfig[viewOrder.status as OrderStatus].icon}
+                        <span className="ml-1">{statusConfig[viewOrder.status as OrderStatus].label}</span>
+                      </Badge>
+                    </div>
+                    <div className="text-muted-foreground">วันที่สั่ง:</div>
+                    <div>{formatDate(viewOrder.created_at)}</div>
+                    <div className="text-muted-foreground">อัปเดตล่าสุด:</div>
+                    <div>{formatDate(viewOrder.updated_at)}</div>
+                    {viewOrder.payment_method && (
+                      <>
+                        <div className="text-muted-foreground">ช่องทางชำระ:</div>
+                        <div>{viewOrder.payment_method}</div>
+                      </>
+                    )}
                   </div>
                 </div>
+
+                {viewOrder.payment_proof_url && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">หลักฐานการชำระเงิน</h4>
+                    <div className="rounded-lg border overflow-hidden">
+                      <img
+                        src={viewOrder.payment_proof_url}
+                        alt="หลักฐานการชำระเงิน"
+                        className="w-full max-h-60 object-contain bg-muted"
+                      />
+                    </div>
+                  </div>
+                )}
 
 
 
