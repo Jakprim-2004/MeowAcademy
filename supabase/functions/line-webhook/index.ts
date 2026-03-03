@@ -420,13 +420,40 @@ serve(async (req) => {
               footer: {
                 type: 'box',
                 layout: 'vertical',
+                spacing: 'sm',
                 contents: [
+                  {
+                    type: 'box',
+                    layout: 'vertical',
+                    backgroundColor: '#eff6ff',
+                    cornerRadius: 'md',
+                    paddingAll: '12px',
+                    contents: [
+                      {
+                        type: 'text',
+                        text: '⏳ กรุณารอดำเนินการ 1-3 วันทำการ',
+                        size: 'sm',
+                        weight: 'bold',
+                        color: '#1d4ed8',
+                        align: 'center',
+                      },
+                      {
+                        type: 'text',
+                        text: 'นับหลังจากวันที่ชำระเงิน',
+                        size: 'xs',
+                        color: '#3b82f6',
+                        align: 'center',
+                        margin: 'xs',
+                      },
+                    ],
+                  },
                   {
                     type: 'text',
                     text: '🐱 ขอบคุณที่ใช้บริการ MeowAcademy',
                     size: 'sm',
                     color: '#888888',
                     align: 'center',
+                    margin: 'md',
                   },
                   {
                     type: 'text',
@@ -434,7 +461,6 @@ serve(async (req) => {
                     size: 'xs',
                     color: '#aaaaaa',
                     align: 'center',
-                    margin: 'sm',
                   },
                 ],
               },
