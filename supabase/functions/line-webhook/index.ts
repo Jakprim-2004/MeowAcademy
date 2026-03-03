@@ -107,7 +107,8 @@ serve(async (req) => {
     const LINE_MESSAGING_CHANNEL_ACCESS_TOKEN = Deno.env.get('LINE_MESSAGING_CHANNEL_ACCESS_TOKEN')?.trim();
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const SLIP2GO_SECRET_KEY = Deno.env.get('SLIP2GO_SECRET_KEY')?.trim();
+    const SLIPOK_API_KEY = Deno.env.get('SLIPOK_API_KEY')?.trim();
+    const SLIPOK_BRANCH_ID = Deno.env.get('SLIPOK_BRANCH_ID')?.trim();
 
     if (!LINE_MESSAGING_CHANNEL_SECRET || !LINE_MESSAGING_CHANNEL_ACCESS_TOKEN) {
       console.error('Missing LINE credentials - MESSAGING_SECRET:', !!LINE_MESSAGING_CHANNEL_SECRET, 'ACCESS_TOKEN:', !!LINE_MESSAGING_CHANNEL_ACCESS_TOKEN);
@@ -208,9 +209,9 @@ serve(async (req) => {
 
         console.log('Image downloaded, verifying slip...');
 
-        // Verify slip with Slip2Go (Without specifying amount first)
-        if (!SLIP2GO_SECRET_KEY) {
-          console.error('SLIP2GO_SECRET_KEY not configured');
+        // Verify slip with SlipOK
+        if (!SLIPOK_API_KEY) {
+          console.error('SLIPOK_API_KEY not configured');
           await replyMessage(event.replyToken!, LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, [
             {
               type: 'text',
@@ -220,30 +221,28 @@ serve(async (req) => {
           continue;
         }
 
-        const verifyResponse = await fetch('https://connect.slip2go.com/api/verify-slip/qr-base64/info', {
+        // Convert Uint8Array to Blob for multipart upload
+        const imageBlob = new Blob([uint8Array], { type: 'image/jpeg' });
+        const slipForm = new FormData();
+        slipForm.append('files', imageBlob, 'slip.jpg');
+        slipForm.append('log', 'true'); // Enable duplicate detection & logging
+
+        const verifyResponse = await fetch(`https://api.slipok.com/api/line/apikey/${SLIPOK_BRANCH_ID}`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SLIP2GO_SECRET_KEY}`,
+            'x-authorization': SLIPOK_API_KEY,
           },
-          body: JSON.stringify({
-            payload: {
-              imageBase64: `data:image/jpeg;base64,${imageBase64}`,
-              checkCondition: {
-                checkDuplicate: true
-                // No checkAmount here, we will match manually
-              }
-            }
-          }),
+          body: slipForm,
         });
 
         const verifyResult = await verifyResponse.json();
-        console.log('Slip2Go verify response:', JSON.stringify(verifyResult));
+        console.log('SlipOK verify response:', JSON.stringify(verifyResult));
 
-        const responseCode = String(verifyResult.code ?? '');
-        const isSuccess = responseCode === '200' || responseCode.startsWith('2002');
-        const isDuplicate = responseCode === '200501' || verifyResult.data?.isDuplicate === true;
-        const isFraud = responseCode === '200500';
+        // SlipOK returns { success: boolean, code: number, message: string, data: {...} }
+        const isSuccess = verifyResult.success === true;
+        const errorCode = verifyResult.code;
+        const isDuplicate = !isSuccess && (errorCode === 1003 || verifyResult.message?.toLowerCase().includes('dupli'));
+        const isFraud = !isSuccess && (errorCode === 1002 || verifyResult.message?.toLowerCase().includes('fraud'));
 
         if (isDuplicate) {
           await replyMessage(event.replyToken!, LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, [
@@ -280,7 +279,7 @@ serve(async (req) => {
         }
 
         // Match slip amount with pending orders
-        const slipAmount = verifyResult.data?.amount || 0;
+        const slipAmount = parseFloat(verifyResult.data?.amount ?? '0') || 0;
         console.log(`Slip amount: ${slipAmount}, Finding matching order...`);
 
         // Find match: allow small difference (e.g. 0.01) if float issues, but usually strict is fine for THB

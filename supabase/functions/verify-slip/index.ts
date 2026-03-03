@@ -6,8 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Slip2Go API endpoint for verifying slips via Base64 image
-const SLIP2GO_VERIFY_URL = 'https://connect.slip2go.com/api/verify-slip/qr-base64/info';
+// SlipOK API base URL — Branch ID and API Key are loaded from environment variables
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -16,14 +15,19 @@ serve(async (req) => {
   }
 
   try {
-    const SLIP2GO_SECRET_KEY = Deno.env.get('SLIP2GO_SECRET_KEY');
-    if (!SLIP2GO_SECRET_KEY) {
-      throw new Error('SLIP2GO_SECRET_KEY is not configured');
+    const SLIPOK_API_KEY = Deno.env.get('SLIPOK_API_KEY');
+    const SLIPOK_BRANCH_ID = Deno.env.get('SLIPOK_BRANCH_ID');
+    if (!SLIPOK_API_KEY) {
+      throw new Error('SLIPOK_API_KEY is not configured');
     }
+    if (!SLIPOK_BRANCH_ID) {
+      throw new Error('SLIPOK_BRANCH_ID is not configured');
+    }
+    const SLIPOK_VERIFY_URL = `https://api.slipok.com/api/line/apikey/${SLIPOK_BRANCH_ID}`;
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
+
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error('Supabase configuration is missing');
     }
@@ -41,53 +45,56 @@ serve(async (req) => {
 
     console.log('Verifying slip for order:', orderId, 'Expected amount:', expectedAmount);
 
-    // Call Slip2Go API to verify the slip
-    const verifyResponse = await fetch(SLIP2GO_VERIFY_URL, {
+    // Convert base64 to Uint8Array for multipart upload
+    const binaryStr = atob(imageBase64);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      bytes[i] = binaryStr.charCodeAt(i);
+    }
+    const imageBlob = new Blob([bytes], { type: 'image/jpeg' });
+
+    // Build multipart/form-data for SlipOK
+    const formData = new FormData();
+    formData.append('files', imageBlob, 'slip.jpg');
+    formData.append('log', 'true'); // Enable duplicate checking & logging
+
+    // Optional: verify amount if provided
+    if (expectedAmount) {
+      formData.append('amount', parseFloat(expectedAmount).toString());
+    }
+
+    // Call SlipOK API to verify the slip
+    const verifyResponse = await fetch(SLIPOK_VERIFY_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SLIP2GO_SECRET_KEY}`,
+        'x-authorization': SLIPOK_API_KEY,
       },
-      body: JSON.stringify({
-        payload: {
-          imageBase64: `data:image/jpeg;base64,${imageBase64}`,
-          checkCondition: {
-            checkDuplicate: true,
-            // Check if amount matches (optional)
-            ...(expectedAmount && {
-              checkAmount: {
-                type: 'gte',
-                amount: parseFloat(expectedAmount).toString()
-              }
-            })
-          }
-        }
-      }),
+      body: formData,
     });
 
     const verifyResult = await verifyResponse.json();
-    console.log('Slip2Go verify response:', JSON.stringify(verifyResult));
-    console.log('Response code:', verifyResult.code, 'Type:', typeof verifyResult.code);
+    console.log('SlipOK verify response:', JSON.stringify(verifyResult));
 
     if (!verifyResponse.ok) {
-      throw new Error(verifyResult.message || `Slip2Go API error: ${verifyResponse.status}`);
+      throw new Error(verifyResult.message || `SlipOK API error: ${verifyResponse.status}`);
     }
 
-    // Check verification result
-    // Observed success codes: "200200" (message: "Slip is valid.")
-    // Known failure codes: "200401" = Recipient Mismatch, "200500" = Fraud, "200501" = Duplicate
-    const responseCode = String(verifyResult.code ?? '');
-    const isSuccess = responseCode === '200' || responseCode.startsWith('2002');
-    const isDuplicate = responseCode === '200501' || verifyResult.data?.isDuplicate === true;
-    const isFraud = responseCode === '200500';
-    const isReceiverMismatch = responseCode === '200401';
+    // SlipOK returns { success: boolean, code: number, message: string, data: {...} }
+    // success === false covers: duplicate (1003), fraud (1002), invalid (1001), receiver mismatch, etc.
+    const isSuccess = verifyResult.success === true;
+    const errorCode = verifyResult.code;
+
+    // Known error codes from SlipOK
+    const isDuplicate = !isSuccess && (errorCode === 1003 || verifyResult.message?.toLowerCase().includes('dupli'));
+    const isFraud = !isSuccess && (errorCode === 1002 || verifyResult.message?.toLowerCase().includes('fraud'));
+    const isReceiverMismatch = !isSuccess && (errorCode === 1004 || verifyResult.message?.toLowerCase().includes('receiver'));
 
     if (isDuplicate) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
+        JSON.stringify({
+          success: false,
           error: 'สลิปนี้ถูกใช้ไปแล้ว กรุณาใช้สลิปใหม่',
-          isDuplicate: true 
+          isDuplicate: true
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -95,8 +102,8 @@ serve(async (req) => {
 
     if (isFraud) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
+        JSON.stringify({
+          success: false,
           error: 'สลิปไม่ถูกต้องหรือเป็นสลิปปลอม กรุณาใช้สลิปจริง',
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -105,8 +112,8 @@ serve(async (req) => {
 
     if (isReceiverMismatch) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
+        JSON.stringify({
+          success: false,
           error: 'บัญชีผู้รับไม่ตรงกัน กรุณาโอนเงินไปยังบัญชีที่ถูกต้อง',
           verificationData: verifyResult.data
         }),
@@ -116,10 +123,10 @@ serve(async (req) => {
 
     if (!isSuccess) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
+        JSON.stringify({
+          success: false,
           error: verifyResult.message || 'สลิปไม่ถูกต้อง กรุณาตรวจสอบและลองใหม่อีกครั้ง',
-          verificationData: verifyResult.data 
+          verificationData: verifyResult.data
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -138,7 +145,7 @@ serve(async (req) => {
 
     const { error: updateError } = await supabase
       .from('orders')
-      .update({ 
+      .update({
         status: 'paid',
         payment_method: 'promptpay',
         updated_at: new Date().toISOString()
@@ -158,17 +165,18 @@ serve(async (req) => {
     // This prevents duplicate notifications
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: 'ตรวจสอบสลิปสำเร็จ! การชำระเงินได้รับการยืนยันแล้ว',
         data: {
           orderId,
           status: 'paid',
           slipData: {
             amount: verifyResult.data?.amount,
-            transactionDate: verifyResult.data?.transactionDate,
-            senderName: verifyResult.data?.sender?.name,
-            receiverName: verifyResult.data?.receiver?.name,
+            transactionDate: verifyResult.data?.transDate || verifyResult.data?.date,
+            senderName: verifyResult.data?.sender?.name || verifyResult.data?.senderName,
+            receiverName: verifyResult.data?.receiver?.name || verifyResult.data?.receiverName,
+            transRef: verifyResult.data?.transRef,
           }
         }
       }),

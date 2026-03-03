@@ -92,23 +92,26 @@ const OrderStatus = () => {
   }, [user, currentPage]);
 
   const fetchOrders = async () => {
+    if (!user) return;
     setIsLoading(true);
     try {
-      // Get total count
+      // Get total count — filtered by current user
       const { count, error: countError } = await supabase
         .from('orders')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
 
       if (countError) throw countError;
       setTotalCount(count || 0);
 
-      // Fetch paginated orders
+      // Fetch paginated orders — filtered by current user
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
       const { data, error } = await supabase
         .from('orders')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .range(from, to);
 
