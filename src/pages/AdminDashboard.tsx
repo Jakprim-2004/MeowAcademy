@@ -695,6 +695,12 @@ const AdminDashboard = () => {
                           if (cardMatch) {
                             fields.push({ label: "รหัสบัตร", value: cardMatch[1].trim() });
                           }
+
+                          // Additional details pattern: รายละเอียดเพิ่มเติม: xxx
+                          const additionalMatch = notes.match(/รายละเอียดเพิ่มเติม[:\s]+(.+)/);
+                          if (additionalMatch) {
+                            fields.push({ label: "รายละเอียดเพิ่มเติม", value: additionalMatch[1].trim() });
+                          }
                           
                           // If no patterns matched, treat entire notes as a single field
                           if (fields.length === 0) {
