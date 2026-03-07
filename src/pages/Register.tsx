@@ -222,16 +222,18 @@ const Register = () => {
   };
 
   const validateForm = () => {
-    if (!formData.name || !formData.email || !formData.citizenId || !formData.gysPassword) {
+    if (!formData.name || !formData.citizenId || !formData.gysPassword) {
       toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
       return false;
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast.error("กรุณากรอกอีเมลให้ถูกต้อง");
-      return false;
+    // Validate email format (only if provided)
+    if (formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast.error("กรุณากรอกอีเมลให้ถูกต้อง");
+        return false;
+      }
     }
 
     if (includeDataEntry && (!formData.studentId || formData.studentId.length !== 10)) {
@@ -260,7 +262,8 @@ const Register = () => {
         const lineUserId = user.user_metadata?.line_user_id || null;
 
         // Append Student ID to notes if provided
-        let notesText = `อีเมล: ${formData.email}\nรหัสผ่าน กยศ: ${formData.gysPassword}`;
+        let notesText = formData.email.trim() ? `อีเมล: ${formData.email}\n` : '';
+        notesText += `รหัสผ่าน กยศ: ${formData.gysPassword}`;
         if (includeDataEntry && formData.studentId) {
           notesText += `\nรหัสนิสิต: ${formData.studentId}`;
         }
@@ -500,6 +503,7 @@ const Register = () => {
                   <Label htmlFor="email" className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-primary" />
                     อีเมล
+                    <span className="text-xs text-muted-foreground font-normal">(ไม่บังคับ)</span>
                   </Label>
                   <Input
                     id="email"
@@ -508,8 +512,10 @@ const Register = () => {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="h-12 rounded-xl"
-                    required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    * เฉพาะทุนเรียนดีเท่านั้น กยศ ไม่ต้องกรอก
+                  </p>
                 </div>
 
                 {/* Citizen ID */}
@@ -647,174 +653,174 @@ const Register = () => {
           ) : (
             /* Payment Section */
             <div className="space-y-6 animate-fade-in-up">
-                <>
-                  <div className="rounded-3xl bg-card border border-border p-8 shadow-sm space-y-6">
-                    {/* Summary */}
-                    <div className="text-center space-y-2">
-                      <Badge variant="secondary" className="text-base px-4 py-2">
-                        ยอดชำระ
-                      </Badge>
-                      <p className="text-4xl font-bold text-primary">
-                        ฿{totalPrice.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
-                      </p>
-                      <p className="text-muted-foreground">{formData.name}</p>
+              <>
+                <div className="rounded-3xl bg-card border border-border p-8 shadow-sm space-y-6">
+                  {/* Summary */}
+                  <div className="text-center space-y-2">
+                    <Badge variant="secondary" className="text-base px-4 py-2">
+                      ยอดชำระ
+                    </Badge>
+                    <p className="text-4xl font-bold text-primary">
+                      ฿{totalPrice.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                    </p>
+                    <p className="text-muted-foreground">{formData.name}</p>
 
-                      {/* Order details */}
-                      <div className="text-sm text-muted-foreground mt-2">
-                        <p>{currentService.title} {type === "hourly" && `(${hours} ชม.)`}</p>
-                        {includeDataEntry && <p>+ บริการกรอกข้อมูลลงระบบ</p>}
-                      </div>
+                    {/* Order details */}
+                    <div className="text-sm text-muted-foreground mt-2">
+                      <p>{currentService.title} {type === "hourly" && `(${hours} ชม.)`}</p>
+                      {includeDataEntry && <p>+ บริการกรอกข้อมูลลงระบบ</p>}
                     </div>
-
-                    {/* Payment Method Tabs */}
-                    <div className="flex gap-2 p-1 bg-muted rounded-xl">
-                      <button
-                        onClick={() => setPaymentMethod('promptpay')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all ${paymentMethod === 'promptpay'
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                          }`}
-                      >
-                        <Smartphone className="w-4 h-4" />
-                        PromptPay QR
-                      </button>
-                      <button
-                        onClick={() => setPaymentMethod('bank')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all ${paymentMethod === 'bank'
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                          }`}
-                      >
-                        <Building className="w-4 h-4" />
-                        โอนผ่านธนาคาร
-                      </button>
-                    </div>
-
-                    {/* Payment Details */}
-                    {paymentMethod === 'promptpay' ? (
-                      /* QR Code */
-                      <div className="flex flex-col items-center space-y-4">
-                        <div className="p-4 bg-white rounded-2xl shadow-md">
-                          {qrCodeData ? (
-                            <img
-                              src={qrCodeData}
-                              alt="PromptPay QR Code"
-                              className="w-64 h-64 object-contain"
-                            />
-                          ) : (
-                            <div className="w-64 h-64 flex items-center justify-center bg-muted rounded-xl">
-                              <QrCode className="w-16 h-16 text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground text-center">
-                          สแกน QR Code ด้วยแอปธนาคารเพื่อชำระเงิน
-                        </p>
-                      </div>
-                    ) : (
-                      /* Bank Transfer */
-                      <div className="space-y-4">
-                        <div className="p-4 bg-muted/50 rounded-xl space-y-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center">
-                              <img src={krungthaiLogo} alt="ธนาคารกรุงไทย" className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-foreground">{bankInfo.bankName}</p>
-                              <p className="text-sm text-muted-foreground">ออมทรัพย์</p>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-muted-foreground">เลขที่บัญชี</span>
-                              <button
-                                onClick={copyAccountNumber}
-                                className="flex items-center gap-2 text-primary hover:underline"
-                              >
-                                <span className="font-mono font-bold text-lg">{bankInfo.accountNumber}</span>
-                                {copied ? (
-                                  <CheckCheck className="w-4 h-4" />
-                                ) : (
-                                  <Copy className="w-4 h-4" />
-                                )}
-                              </button>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-muted-foreground">ชื่อบัญชี</span>
-                              <span className="font-medium text-foreground">{bankInfo.accountName}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <p className="text-sm text-muted-foreground text-center">
-                          โอนเงินผ่านแอปธนาคาร หรือ ATM แล้วส่งสลิปผ่าน LINE
-                        </p>
-                      </div>
-                    )}
                   </div>
 
-                  {/* LINE Send Slip Section */}
-                  <div className="rounded-3xl bg-card border border-border p-6 shadow-sm space-y-4">
-                    <div className="text-center">
-                      <h3 className="font-semibold text-foreground mb-2">
-                        ส่งสลิปผ่าน LINE เพื่อยืนยันการชำระเงิน
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        หลังโอนเงินแล้ว กรุณาส่งสลิปมาทาง LINE OA เพื่อตรวจสอบอัตโนมัติ
+                  {/* Payment Method Tabs */}
+                  <div className="flex gap-2 p-1 bg-muted rounded-xl">
+                    <button
+                      onClick={() => setPaymentMethod('promptpay')}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all ${paymentMethod === 'promptpay'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                      <Smartphone className="w-4 h-4" />
+                      PromptPay QR
+                    </button>
+                    <button
+                      onClick={() => setPaymentMethod('bank')}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all ${paymentMethod === 'bank'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                      <Building className="w-4 h-4" />
+                      โอนผ่านธนาคาร
+                    </button>
+                  </div>
+
+                  {/* Payment Details */}
+                  {paymentMethod === 'promptpay' ? (
+                    /* QR Code */
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="p-4 bg-white rounded-2xl shadow-md">
+                        {qrCodeData ? (
+                          <img
+                            src={qrCodeData}
+                            alt="PromptPay QR Code"
+                            className="w-64 h-64 object-contain"
+                          />
+                        ) : (
+                          <div className="w-64 h-64 flex items-center justify-center bg-muted rounded-xl">
+                            <QrCode className="w-16 h-16 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground text-center">
+                        สแกน QR Code ด้วยแอปธนาคารเพื่อชำระเงิน
                       </p>
                     </div>
+                  ) : (
+                    /* Bank Transfer */
+                    <div className="space-y-4">
+                      <div className="p-4 bg-muted/50 rounded-xl space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center">
+                            <img src={krungthaiLogo} alt="ธนาคารกรุงไทย" className="w-full h-full object-cover" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground">{bankInfo.bankName}</p>
+                            <p className="text-sm text-muted-foreground">ออมทรัพย์</p>
+                          </div>
+                        </div>
 
-                    <a
-                      href="https://line.me/R/oaMessage/@807chkoh/?%E0%B8%AA%E0%B9%88%E0%B8%87%E0%B8%AA%E0%B8%A5%E0%B8%B4%E0%B8%9B%E0%B8%A2%E0%B8%B7%E0%B8%99%E0%B8%A2%E0%B8%B1%E0%B8%99%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%8A%E0%B8%B3%E0%B8%A3%E0%B8%B0%E0%B9%80%E0%B8%87%E0%B8%B4%E0%B8%99"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-3 w-full h-14 bg-[#06C755] hover:bg-[#05b54d] text-white rounded-2xl text-lg font-semibold transition-colors shadow-lg md:hidden"
-                    >
-                      <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
-                        <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
-                      </svg>
-                      ส่งสลิปผ่าน LINE
-                    </a>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">เลขที่บัญชี</span>
+                            <button
+                              onClick={copyAccountNumber}
+                              className="flex items-center gap-2 text-primary hover:underline"
+                            >
+                              <span className="font-mono font-bold text-lg">{bankInfo.accountNumber}</span>
+                              {copied ? (
+                                <CheckCheck className="w-4 h-4" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
 
-                    {/* Desktop: แสดงคำแนะนำเพิ่ม LINE OA */}
-                    <div className="hidden md:flex flex-col items-center gap-3 w-full p-5 bg-[#06C755]/10 border-2 border-[#06C755]/30 rounded-2xl">
-                      <svg viewBox="0 0 24 24" className="w-10 h-10 fill-[#06C755]">
-                        <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
-                      </svg>
-                      <p className="text-base font-semibold text-foreground">ส่งสลิปผ่าน LINE OA</p>
-                      <p className="text-sm text-muted-foreground text-center">เปิด LINE บนมือถือแล้วค้นหา</p>
-                      <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-4 py-2">
-                        <span className="text-lg font-bold text-[#06C755]">@807chkoh</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText("@807chkoh");
-                          }}
-                          className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
-                        >
-                          คัดลอก
-                        </button>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">ชื่อบัญชี</span>
+                            <span className="font-medium text-foreground">{bankInfo.accountName}</span>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground text-center">เพิ่มเพื่อนแล้วส่งรูปสลิปในแชทได้เลย</p>
-                    </div>
 
-                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-2">
-                      <p className="text-sm font-medium text-foreground text-center">วิธีส่งสลิป</p>
-                      <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-                        <li className="md:hidden">กดปุ่ม "ส่งสลิปผ่าน LINE" ด้านบน</li>
-                        <li className="hidden md:list-item">เพิ่มเพื่อน LINE OA: @807chkoh</li>
-                        <li>ส่งรูปสลิปการโอนเงินในแชท</li>
-                        <li>ระบบจะตรวจสอบอัตโนมัติ และแจ้งผลทันที</li>
-                      </ol>
+                      <p className="text-sm text-muted-foreground text-center">
+                        โอนเงินผ่านแอปธนาคาร หรือ ATM แล้วส่งสลิปผ่าน LINE
+                      </p>
                     </div>
+                  )}
+                </div>
 
-                    <p className="text-xs text-muted-foreground text-center">
-                      LINE OA: @807chkoh | ระบบตรวจสอบสลิปอัตโนมัติ 24 ชม.
+                {/* LINE Send Slip Section */}
+                <div className="rounded-3xl bg-card border border-border p-6 shadow-sm space-y-4">
+                  <div className="text-center">
+                    <h3 className="font-semibold text-foreground mb-2">
+                      ส่งสลิปผ่าน LINE เพื่อยืนยันการชำระเงิน
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      หลังโอนเงินแล้ว กรุณาส่งสลิปมาทาง LINE OA เพื่อตรวจสอบอัตโนมัติ
                     </p>
                   </div>
-                </>
+
+                  <a
+                    href="https://line.me/R/oaMessage/@807chkoh/?%E0%B8%AA%E0%B9%88%E0%B8%87%E0%B8%AA%E0%B8%A5%E0%B8%B4%E0%B8%9B%E0%B8%A2%E0%B8%B7%E0%B8%99%E0%B8%A2%E0%B8%B1%E0%B8%99%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%8A%E0%B8%B3%E0%B8%A3%E0%B8%B0%E0%B9%80%E0%B8%87%E0%B8%B4%E0%B8%99"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 w-full h-14 bg-[#06C755] hover:bg-[#05b54d] text-white rounded-2xl text-lg font-semibold transition-colors shadow-lg md:hidden"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
+                      <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+                    </svg>
+                    ส่งสลิปผ่าน LINE
+                  </a>
+
+                  {/* Desktop: แสดงคำแนะนำเพิ่ม LINE OA */}
+                  <div className="hidden md:flex flex-col items-center gap-3 w-full p-5 bg-[#06C755]/10 border-2 border-[#06C755]/30 rounded-2xl">
+                    <svg viewBox="0 0 24 24" className="w-10 h-10 fill-[#06C755]">
+                      <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+                    </svg>
+                    <p className="text-base font-semibold text-foreground">ส่งสลิปผ่าน LINE OA</p>
+                    <p className="text-sm text-muted-foreground text-center">เปิด LINE บนมือถือแล้วค้นหา</p>
+                    <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-4 py-2">
+                      <span className="text-lg font-bold text-[#06C755]">@807chkoh</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText("@807chkoh");
+                        }}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
+                      >
+                        คัดลอก
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">เพิ่มเพื่อนแล้วส่งรูปสลิปในแชทได้เลย</p>
+                  </div>
+
+                  <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-2">
+                    <p className="text-sm font-medium text-foreground text-center">วิธีส่งสลิป</p>
+                    <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                      <li className="md:hidden">กดปุ่ม "ส่งสลิปผ่าน LINE" ด้านบน</li>
+                      <li className="hidden md:list-item">เพิ่มเพื่อน LINE OA: @807chkoh</li>
+                      <li>ส่งรูปสลิปการโอนเงินในแชท</li>
+                      <li>ระบบจะตรวจสอบอัตโนมัติ และแจ้งผลทันที</li>
+                    </ol>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground text-center">
+                    LINE OA: @807chkoh | ระบบตรวจสอบสลิปอัตโนมัติ 24 ชม.
+                  </p>
+                </div>
+              </>
             </div>
           )}
         </div>
