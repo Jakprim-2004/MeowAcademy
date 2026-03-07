@@ -22,14 +22,11 @@ const SlipCard = memo(({ slip }: { slip: SlipData }) => {
                 <img
                     src={slip.payment_proof_url}
                     alt="หลักฐานการชำระเงิน"
-                    className="w-full h-[260px] md:h-[320px] object-cover"
+                    className="w-full h-[260px] md:h-[320px] object-cover blur-[3px]"
                     loading="lazy"
                     onLoad={() => setStatus('loaded')}
                     onError={() => setStatus('error')}
                 />
-                {/* PDPA Protection: blur personal info areas (top & bottom of slip) */}
-                <div className="absolute top-0 left-0 right-0 h-[35%] bg-gradient-to-b from-white/90 via-white/60 to-transparent backdrop-blur-[2px] pointer-events-none" />
-                <div className="absolute bottom-0 left-0 right-0 h-[25%] bg-gradient-to-t from-white/90 via-white/60 to-transparent backdrop-blur-[2px] pointer-events-none" />
             </div>
         </div>
     );
