@@ -4,6 +4,17 @@ import { ArrowLeft, Clock, CheckCircle, XCircle, Loader2, Package, FileText, Ref
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -61,6 +72,7 @@ const OrderStatus = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCancelling, setIsCancelling] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const navigate = useNavigate();
@@ -124,6 +136,28 @@ const OrderStatus = () => {
       toast.error("ไม่สามารถโหลดข้อมูลคำสั่งซื้อได้");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!user) return;
+    setIsCancelling(orderId);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'cancelled' })
+        .eq('id', orderId)
+        .eq('user_id', user.id); // Ensure they can only cancel their own order
+
+      if (error) throw error;
+
+      toast.success("ยกเลิกคำสั่งซื้อสำเร็จ");
+      fetchOrders(); // Refresh the list
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast.error("ไม่สามารถยกเลิกคำสั่งซื้อได้ โปรดลองอีกครั้ง");
+    } finally {
+      setIsCancelling(null);
     }
   };
 
@@ -303,11 +337,11 @@ const OrderStatus = () => {
                         )}
                       </div>
 
-                      {/* Show "ชำระเงิน" button for pending orders */}
+                      {/* Show "ชำระเงิน" and "ยกเลิก" buttons for pending orders */}
                       {isPending && (
-                        <div className="mt-4 pt-3 border-t border-border">
+                        <div className="mt-4 pt-3 border-t border-border flex flex-col sm:flex-row gap-2">
                           <Button
-                            className="w-full bg-hero-gradient hover:opacity-90"
+                            className="flex-1 bg-hero-gradient hover:opacity-90"
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate(`/register?type=${order.service_type}&orderId=${order.id}`);
@@ -316,6 +350,48 @@ const OrderStatus = () => {
                             <CreditCard className="w-4 h-4 mr-2" />
                             ชำระเงินตอนนี้
                           </Button>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="flex-1 sm:flex-none border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                ยกเลิกคำสั่งซื้อ
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>ยืนยันการยกเลิกคำสั่งซื้อ?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำสั่งซื้อบริการ <span className="font-medium text-foreground">{order.service_name}</span>?
+                                  การกระทำนี้ไม่สามารถย้อนกลับได้
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>ปิด</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCancelOrder(order.id);
+                                  }}
+                                  disabled={isCancelling === order.id}
+                                >
+                                  {isCancelling === order.id ? (
+                                    <>
+                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                      กำลังยกเลิก...
+                                    </>
+                                  ) : (
+                                    "ยืนยันการยกเลิก"
+                                  )}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       )}
                     </CardContent>
