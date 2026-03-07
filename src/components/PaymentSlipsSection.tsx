@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import { Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -7,18 +7,29 @@ interface SlipData {
     payment_proof_url: string;
 }
 
-const SlipCard = memo(({ slip }: { slip: SlipData }) => (
-    <div className="w-[180px] md:w-[220px] flex-shrink-0 mx-3 transform-gpu will-change-transform">
-        <div className="rounded-xl overflow-hidden border border-border/50 shadow-sm bg-white hover:shadow-md transition-shadow duration-300">
-            <img
-                src={slip.payment_proof_url}
-                alt="หลักฐานการชำระเงิน"
-                className="w-full h-[260px] md:h-[320px] object-cover"
-                loading="lazy"
-            />
+const SlipCard = memo(({ slip }: { slip: SlipData }) => {
+    const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+
+    if (status === 'error') return null;
+
+    return (
+        <div
+            className="w-[180px] md:w-[220px] flex-shrink-0 mx-3 transform-gpu will-change-transform"
+            style={{ display: status === 'loading' ? 'none' : 'block' }}
+        >
+            <div className="rounded-xl overflow-hidden border border-border/50 shadow-sm bg-white hover:shadow-md transition-shadow duration-300">
+                <img
+                    src={slip.payment_proof_url}
+                    alt="หลักฐานการชำระเงิน"
+                    className="w-full h-[260px] md:h-[320px] object-cover"
+                    loading="lazy"
+                    onLoad={() => setStatus('loaded')}
+                    onError={() => setStatus('error')}
+                />
+            </div>
         </div>
-    </div>
-));
+    );
+});
 
 SlipCard.displayName = "SlipCard";
 
@@ -31,19 +42,45 @@ const PaymentSlipsSection = () => {
 
     const fetchSlips = async () => {
         try {
-            const { data, error } = await supabase
-                .from("orders")
-                .select("id, payment_proof_url")
-                .not("payment_proof_url", "is", null)
-                .in("status", ["paid", "processing", "completed"])
-                .order("updated_at", { ascending: false })
-                .limit(30);
+            const allSlips: SlipData[] = [];
+            const SUPABASE_URL = "https://iiimpsfjzcgxcoxvveis.supabase.co";
 
-            if (error) throw error;
+            // 1. List root-level files (e.g., S__17113092_0.jpg)
+            const { data: rootItems, error: rootError } = await supabase.storage
+                .from("payment-slips")
+                .list("", { limit: 100 });
 
-            if (data && data.length > 0) {
-                setSlips(data as SlipData[]);
+            if (rootError) throw rootError;
+
+            if (rootItems) {
+                for (const item of rootItems) {
+                    if (item.name && item.metadata) {
+                        // It's a file (has metadata), not a folder
+                        allSlips.push({
+                            id: item.name,
+                            payment_proof_url: `${SUPABASE_URL}/storage/v1/object/public/payment-slips/${item.name}`,
+                        });
+                    } else if (item.name && !item.metadata) {
+                        // It's a folder — list files inside it
+                        const { data: subItems, error: subError } = await supabase.storage
+                            .from("payment-slips")
+                            .list(item.name, { limit: 10 });
+
+                        if (!subError && subItems) {
+                            for (const subItem of subItems) {
+                                if (subItem.name && subItem.metadata) {
+                                    allSlips.push({
+                                        id: `${item.name}/${subItem.name}`,
+                                        payment_proof_url: `${SUPABASE_URL}/storage/v1/object/public/payment-slips/${item.name}/${subItem.name}`,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
             }
+
+            setSlips(allSlips);
         } catch (error) {
             console.error("Error fetching payment slips:", error);
         }
@@ -67,10 +104,6 @@ const PaymentSlipsSection = () => {
 
             <div className="container mx-auto px-4 mb-10">
                 <div className="text-center animate-fade-in">
-                    <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-1.5 rounded-full text-sm font-medium mb-4 border border-green-200">
-                        <Receipt className="w-4 h-4" />
-                        ยอดชำระจริง
-                    </div>
                     <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
                         หลักฐานการชำระเงิน
                     </h2>
