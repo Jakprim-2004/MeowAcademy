@@ -231,12 +231,19 @@ const AdminDashboard = () => {
       ));
       toast.success(`อัปเดตสถานะเป็น "${statusConfig[newStatus].label}" แล้ว`);
 
-      // Send LINE notification for processing or completed status
-      if ((newStatus === 'processing' || newStatus === 'completed') && order.line_user_id) {
+      // Send LINE notification for all status changes
+      const notifyTypeMap: Record<string, string> = {
+        paid: 'payment_success',
+        processing: 'work_processing',
+        completed: 'work_completed',
+        cancelled: 'order_cancelled',
+      };
+      const notifyType = notifyTypeMap[newStatus];
+      if (notifyType && order.line_user_id) {
         try {
           await supabase.functions.invoke('line-notify', {
             body: {
-              type: newStatus === 'completed' ? 'work_completed' : 'work_processing',
+              type: notifyType,
               orderId: orderId,
               customerName: order.customer_name,
               serviceName: order.service_name,
@@ -626,7 +633,7 @@ const AdminDashboard = () => {
 
         {/* Order Details Dialog */}
         <Dialog open={!!viewOrder} onOpenChange={(open) => !open && setViewOrder(null)}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md overflow-y-auto max-h-[80vh]">
             <DialogHeader>
               <DialogTitle>รายละเอียดคำสั่งซื้อ</DialogTitle>
               <DialogDescription>
@@ -671,19 +678,19 @@ const AdminDashboard = () => {
                         // Parse notes into fields
                         const parseNotes = (notes: string) => {
                           const fields: { label: string; value: string }[] = [];
-                          
+
                           // Email pattern: อีเมล: xxx
                           const emailMatch = notes.match(/อีเมล[:\s]+([^\s]+@[^\s]+)/);
                           if (emailMatch) {
                             fields.push({ label: "อีเมล", value: emailMatch[1].trim() });
                           }
-                          
+
                           // Password pattern: รหัสผ่าน กย ศ: xxx หรือ รหัสผ่านกยศ: xxx หรือ รหัสผ่าน: xxx
                           const passwordMatch = notes.match(/รหัสผ่าน(?:\s*กย\s*ศ)?[:\s]+(\S+)/);
                           if (passwordMatch) {
                             fields.push({ label: "รหัสผ่าน กยศ", value: passwordMatch[1].trim() });
                           }
-                          
+
                           // Student ID pattern: รหัสนิสิต: xxx
                           const studentIdMatch = notes.match(/รหัสนิสิต[:\s]+(\S+)/);
                           if (studentIdMatch) {
@@ -701,17 +708,17 @@ const AdminDashboard = () => {
                           if (additionalMatch) {
                             fields.push({ label: "รายละเอียดเพิ่มเติม", value: additionalMatch[1].trim() });
                           }
-                          
+
                           // If no patterns matched, treat entire notes as a single field
                           if (fields.length === 0) {
                             fields.push({ label: "หมายเหตุ", value: notes });
                           }
-                          
+
                           return fields;
                         };
-                        
+
                         const fields = parseNotes(viewOrder.notes);
-                        
+
                         return (
                           <div className="space-y-2">
                             {fields.map((field, index) => (
@@ -781,27 +788,8 @@ const AdminDashboard = () => {
                     <div>{formatDate(viewOrder.created_at)}</div>
                     <div className="text-muted-foreground">อัปเดตล่าสุด:</div>
                     <div>{formatDate(viewOrder.updated_at)}</div>
-                    {viewOrder.payment_method && (
-                      <>
-                        <div className="text-muted-foreground">ช่องทางชำระ:</div>
-                        <div>{viewOrder.payment_method}</div>
-                      </>
-                    )}
                   </div>
                 </div>
-
-                {viewOrder.payment_proof_url && (
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">หลักฐานการชำระเงิน</h4>
-                    <div className="rounded-lg border overflow-hidden">
-                      <img
-                        src={viewOrder.payment_proof_url}
-                        alt="หลักฐานการชำระเงิน"
-                        className="w-full max-h-60 object-contain bg-muted"
-                      />
-                    </div>
-                  </div>
-                )}
 
 
 

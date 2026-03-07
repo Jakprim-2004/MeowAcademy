@@ -805,8 +805,7 @@ serve(async (req) => {
           // Echo back any other message for testing
           await replyMessage(event.replyToken!, LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, [
             {
-              type: 'text',
-              text: `🐱 ได้รับข้อความแล้ว: "${event.message.text}"\n\nพิมพ์ "ช่วย" เพื่อดูวิธีใช้งานครับ`,
+             
             },
           ]);
         }

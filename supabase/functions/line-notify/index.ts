@@ -293,6 +293,203 @@ serve(async (req) => {
         };
         break;
 
+      case 'work_processing':
+        flexMessage = {
+          type: 'flex',
+          altText: '🔄 กำลังดำเนินการ - MeowAcademy',
+          contents: {
+            type: 'bubble',
+            header: {
+              type: 'box',
+              layout: 'vertical',
+              backgroundColor: '#a855f7',
+              paddingAll: '15px',
+              contents: [
+                {
+                  type: 'text',
+                  text: '🔄 กำลังดำเนินการ',
+                  color: '#ffffff',
+                  weight: 'bold',
+                  size: 'lg',
+                },
+              ],
+            },
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              spacing: 'md',
+              contents: [
+                {
+                  type: 'text',
+                  text: `สวัสดีครับ คุณ${customerName}`,
+                  size: 'md',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: 'งานของคุณกำลังอยู่ในระหว่างดำเนินการครับ 🔧',
+                  size: 'sm',
+                  color: '#888888',
+                  wrap: true,
+                },
+                {
+                  type: 'separator',
+                  margin: 'lg',
+                },
+                {
+                  type: 'box',
+                  layout: 'horizontal',
+                  margin: 'lg',
+                  contents: [
+                    { type: 'text', text: '📋 บริการ', size: 'sm', color: '#888888', flex: 1 },
+                    { type: 'text', text: serviceName, size: 'sm', wrap: true, flex: 2 },
+                  ],
+                },
+                {
+                  type: 'box',
+                  layout: 'horizontal',
+                  margin: 'sm',
+                  contents: [
+                    { type: 'text', text: '📝 รหัส', size: 'sm', color: '#888888', flex: 1 },
+                    { type: 'text', text: orderId.slice(0, 8) + '...', size: 'sm', flex: 2 },
+                  ],
+                },
+                {
+                  type: 'box',
+                  layout: 'horizontal',
+                  margin: 'sm',
+                  contents: [
+                    { type: 'text', text: '📊 สถานะ', size: 'sm', color: '#888888', flex: 1 },
+                    { type: 'text', text: 'กำลังดำเนินการ 🔄', size: 'sm', color: '#a855f7', weight: 'bold', flex: 2 },
+                  ],
+                },
+              ],
+            },
+            footer: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: '⏳ กรุณารอสักครู่ เราจะแจ้งเมื่องานเสร็จครับ',
+                  size: 'sm',
+                  color: '#888888',
+                  align: 'center',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '🐱 MeowAcademy',
+                  size: 'xs',
+                  color: '#aaaaaa',
+                  align: 'center',
+                  margin: 'md',
+                },
+              ],
+            },
+          },
+        };
+        break;
+
+      case 'order_cancelled':
+        flexMessage = {
+          type: 'flex',
+          altText: '❌ ออเดอร์ถูกยกเลิก - MeowAcademy',
+          contents: {
+            type: 'bubble',
+            header: {
+              type: 'box',
+              layout: 'vertical',
+              backgroundColor: '#ef4444',
+              paddingAll: '15px',
+              contents: [
+                {
+                  type: 'text',
+                  text: '❌ ออเดอร์ถูกยกเลิก',
+                  color: '#ffffff',
+                  weight: 'bold',
+                  size: 'lg',
+                },
+              ],
+            },
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              spacing: 'md',
+              contents: [
+                {
+                  type: 'text',
+                  text: `สวัสดีครับ คุณ${customerName}`,
+                  size: 'md',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: 'ออเดอร์ของคุณถูกยกเลิกโดยแอดมินครับ',
+                  size: 'sm',
+                  color: '#888888',
+                  wrap: true,
+                },
+                {
+                  type: 'separator',
+                  margin: 'lg',
+                },
+                {
+                  type: 'box',
+                  layout: 'horizontal',
+                  margin: 'lg',
+                  contents: [
+                    { type: 'text', text: '📋 บริการ', size: 'sm', color: '#888888', flex: 1 },
+                    { type: 'text', text: serviceName, size: 'sm', wrap: true, flex: 2 },
+                  ],
+                },
+                {
+                  type: 'box',
+                  layout: 'horizontal',
+                  margin: 'sm',
+                  contents: [
+                    { type: 'text', text: '💰 ยอดเงิน', size: 'sm', color: '#888888', flex: 1 },
+                    { type: 'text', text: `${price} บาท`, size: 'sm', flex: 2 },
+                  ],
+                },
+                {
+                  type: 'box',
+                  layout: 'horizontal',
+                  margin: 'sm',
+                  contents: [
+                    { type: 'text', text: '📊 สถานะ', size: 'sm', color: '#888888', flex: 1 },
+                    { type: 'text', text: 'ยกเลิกแล้ว ❌', size: 'sm', color: '#ef4444', weight: 'bold', flex: 2 },
+                  ],
+                },
+              ],
+            },
+            footer: {
+              type: 'box',
+              layout: 'vertical',
+              spacing: 'sm',
+              contents: [
+                {
+                  type: 'text',
+                  text: 'หากต้องการสั่งใหม่ สามารถทำได้เลยครับ',
+                  size: 'xs',
+                  color: '#aaaaaa',
+                  align: 'center',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '🐱 MeowAcademy',
+                  size: 'xs',
+                  color: '#888888',
+                  align: 'center',
+                  margin: 'md',
+                },
+              ],
+            },
+          },
+        };
+        break;
+
       default:
         throw new Error('Invalid notification type');
     }
