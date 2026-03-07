@@ -836,7 +836,26 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-
+                {viewOrder.payment_proof_url && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">หลักฐานการชำระเงิน (สลิป)</h4>
+                    <div
+                      className="rounded-lg border overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary transition-all group relative"
+                      onClick={() => window.open(viewOrder.payment_proof_url!, '_blank')}
+                    >
+                      <img
+                        src={viewOrder.payment_proof_url}
+                        alt="สลิปการชำระเงิน"
+                        className="w-full max-h-72 object-contain bg-muted"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-all">
+                        <span className="opacity-0 group-hover:opacity-100 text-white bg-black/60 px-3 py-1 rounded-full text-xs transition-all">
+                          คลิกเพื่อดูเต็มจอ
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
 
               </div>
