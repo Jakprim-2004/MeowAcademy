@@ -127,7 +127,7 @@ const PaymentSlipsSection = () => {
           100% { transform: translateX(-50%); }
         }
         .animate-scroll-slips {
-          animation: scroll-slips 60s linear infinite;
+          animation: scroll-slips 80s linear infinite;
         }
       `}</style>
 
