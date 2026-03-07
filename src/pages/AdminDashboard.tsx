@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ShieldCheck, Package, Clock, CheckCircle, XCircle, Loader2, ChevronLeft, ChevronRight, MessageSquare, Eye, Copy, Filter } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, XCircle, Loader2, Package, FileText, RefreshCw, ChevronLeft, ChevronRight, CreditCard, Receipt, MessageSquare, ShieldCheck, Filter, Trash2, Eye, Copy, Bell } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +51,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [reminding, setReminding] = useState<string | null>(null);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -263,6 +264,33 @@ const AdminDashboard = () => {
       toast.error("เกิดข้อผิดพลาด");
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const handlePaymentReminder = async (orderId: string, customerName: string, serviceName: string, lineUserId: string) => {
+    setReminding(orderId);
+    try {
+      const priceFormatted = orders.find(o => o.id === orderId)?.total_price.toLocaleString() || "0";
+      const message = `สวัสดีครับ คุณ${customerName}\n\nแอดมินขออนุญาตทักไปเตือนยอดชำระเงินของบริการ:\n📋 ${serviceName}\n💰 ยอดชำระ: ${priceFormatted} บาท\n\nรบกวนส่งสลิปเพื่อยืนยันการชำระเงินด้วยนะครับ แอดมินจะได้เริ่มคิวงานให้เลยครับ 🐱💕`;
+
+      const { data, error } = await supabase.functions.invoke('line-push-message', {
+        body: {
+          lineUserId,
+          message,
+          customerName
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success('ส่งข้อความแจ้งเตือนชำระเงินแล้ว');
+    } catch (error) {
+      console.error('Error sending payment reminder:', error);
+      toast.error('ไม่สามารถส่งข้อความแจ้งเตือนได้');
+    } finally {
+      setReminding(null);
     }
   };
 
@@ -548,6 +576,23 @@ const AdminDashboard = () => {
                                   title="ส่งข้อความหาลูกค้า"
                                 >
                                   <MessageSquare className="w-4 h-4" />
+                                </Button>
+                              )}
+
+                              {order.status === 'pending' && order.line_user_id && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handlePaymentReminder(order.id, order.customer_name, order.service_name, order.line_user_id!)}
+                                  disabled={reminding === order.id}
+                                  title="ส่งแจ้งเตือนให้ชำระเงิน"
+                                  className="text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50"
+                                >
+                                  {reminding === order.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Bell className="w-4 h-4" />
+                                  )}
                                 </Button>
                               )}
 
