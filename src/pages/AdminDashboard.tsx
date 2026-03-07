@@ -271,7 +271,7 @@ const AdminDashboard = () => {
     setReminding(orderId);
     try {
       const priceFormatted = orders.find(o => o.id === orderId)?.total_price.toLocaleString() || "0";
-      const message = `สวัสดีครับ คุณ${customerName}\n\nแอดมินขออนุญาตทักไปเตือนยอดชำระเงินของบริการ:\n📋 ${serviceName}\n💰 ยอดชำระ: ${priceFormatted} บาท\n\nรบกวนส่งสลิปเพื่อยืนยันการชำระเงินด้วยนะครับ แอดมินจะได้เริ่มคิวงานให้เลยครับ 🐱💕`;
+      const message = `สวัสดีครับ คุณ${customerName}\n\nแอดมินเห็นว่าออเดอร์ยังรอชำระอยู่\nลูกค้าลืมหรือติดปัญหาตรงไหนไหมเอ่ย?\n\nสรุปยอดชำระของบริการ:\n📋 ${serviceName}\n💰 ยอดชำระ: ${priceFormatted} บาท\n\nถ้ายกเลิกหรือยังไม่สะดวกแจ้งได้เลยน้า\nหรือถ้าชำระแล้ว รบกวนส่งสลิป\nให้แอดมินหน่อยนะครับ 🐱💕`;
 
       const { data, error } = await supabase.functions.invoke('line-push-message', {
         body: {
