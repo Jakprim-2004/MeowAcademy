@@ -802,16 +802,12 @@ serve(async (req) => {
             }
           ]);
         } else {
-          // Echo back any other message for testing
-          await replyMessage(event.replyToken!, LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, [
-            {
-             
-            },
-          ]);
+          // Do nothing for unrecognized text to avoid spamming the user
+          console.log(`Unrecognized text received: "${text}", ignoring.`);
         }
       }
 
-     
+
 
       // Handle postback event (payment and RATE button click)
       if (event.type === 'postback' && event.postback?.data) {
