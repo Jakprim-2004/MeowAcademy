@@ -1,11 +1,12 @@
-import { useState, useEffect, memo, useCallback } from "react";
-import { Receipt } from "lucide-react";
+import { useState, useEffect, memo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SlipData {
     id: string;
     payment_proof_url: string;
 }
+
+const SUPABASE_URL = "https://iiimpsfjzcgxcoxvveis.supabase.co";
 
 const SlipCard = memo(({ slip }: { slip: SlipData }) => {
     const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
@@ -17,7 +18,7 @@ const SlipCard = memo(({ slip }: { slip: SlipData }) => {
             className="w-[180px] md:w-[220px] flex-shrink-0 mx-3 transform-gpu will-change-transform"
             style={{ display: status === 'loading' ? 'none' : 'block' }}
         >
-            <div className="rounded-xl overflow-hidden border border-border/50 shadow-sm bg-white hover:shadow-md transition-shadow duration-300">
+            <div className="rounded-xl overflow-hidden border border-border/50 shadow-sm bg-white hover:shadow-md transition-shadow duration-300 relative">
                 <img
                     src={slip.payment_proof_url}
                     alt="หลักฐานการชำระเงิน"
@@ -26,6 +27,9 @@ const SlipCard = memo(({ slip }: { slip: SlipData }) => {
                     onLoad={() => setStatus('loaded')}
                     onError={() => setStatus('error')}
                 />
+                {/* PDPA Protection: blur personal info areas (top & bottom of slip) */}
+                <div className="absolute top-0 left-0 right-0 h-[35%] bg-gradient-to-b from-white/90 via-white/60 to-transparent backdrop-blur-[2px] pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 h-[25%] bg-gradient-to-t from-white/90 via-white/60 to-transparent backdrop-blur-[2px] pointer-events-none" />
             </div>
         </div>
     );
@@ -43,41 +47,66 @@ const PaymentSlipsSection = () => {
     const fetchSlips = async () => {
         try {
             const allSlips: SlipData[] = [];
-            const SUPABASE_URL = "https://iiimpsfjzcgxcoxvveis.supabase.co";
+            const seenUrls = new Set<string>();
 
-            // 1. List root-level files (e.g., S__17113092_0.jpg)
-            const { data: rootItems, error: rootError } = await supabase.storage
-                .from("payment-slips")
-                .list("", { limit: 100 });
+            // 1. Primary: Fetch from database (reliable, works with anon key)
+            const { data: dbData } = await supabase
+                .from("orders")
+                .select("id, payment_proof_url")
+                .not("payment_proof_url", "is", null)
+                .in("status", ["paid", "processing", "completed"])
+                .order("updated_at", { ascending: false })
+                .limit(30);
 
-            if (rootError) throw rootError;
-
-            if (rootItems) {
-                for (const item of rootItems) {
-                    if (item.name && item.metadata) {
-                        // It's a file (has metadata), not a folder
+            if (dbData) {
+                for (const order of dbData) {
+                    if (order.payment_proof_url && !seenUrls.has(order.payment_proof_url)) {
+                        seenUrls.add(order.payment_proof_url);
                         allSlips.push({
-                            id: item.name,
-                            payment_proof_url: `${SUPABASE_URL}/storage/v1/object/public/payment-slips/${item.name}`,
+                            id: order.id,
+                            payment_proof_url: order.payment_proof_url,
                         });
-                    } else if (item.name && !item.metadata) {
-                        // It's a folder — list files inside it
-                        const { data: subItems, error: subError } = await supabase.storage
-                            .from("payment-slips")
-                            .list(item.name, { limit: 10 });
+                    }
+                }
+            }
 
-                        if (!subError && subItems) {
-                            for (const subItem of subItems) {
-                                if (subItem.name && subItem.metadata) {
-                                    allSlips.push({
-                                        id: `${item.name}/${subItem.name}`,
-                                        payment_proof_url: `${SUPABASE_URL}/storage/v1/object/public/payment-slips/${item.name}/${subItem.name}`,
-                                    });
+            // 2. Secondary: Try listing storage bucket directly (may fail due to RLS)
+            try {
+                const { data: rootItems } = await supabase.storage
+                    .from("payment-slips")
+                    .list("", { limit: 100 });
+
+                if (rootItems) {
+                    for (const item of rootItems) {
+                        if (item.name && item.metadata) {
+                            // File at root level
+                            const url = `${SUPABASE_URL}/storage/v1/object/public/payment-slips/${item.name}`;
+                            if (!seenUrls.has(url)) {
+                                seenUrls.add(url);
+                                allSlips.push({ id: item.name, payment_proof_url: url });
+                            }
+                        } else if (item.name && !item.metadata) {
+                            // Folder — list files inside
+                            const { data: subItems } = await supabase.storage
+                                .from("payment-slips")
+                                .list(item.name, { limit: 10 });
+
+                            if (subItems) {
+                                for (const sub of subItems) {
+                                    if (sub.name && sub.metadata) {
+                                        const url = `${SUPABASE_URL}/storage/v1/object/public/payment-slips/${item.name}/${sub.name}`;
+                                        if (!seenUrls.has(url)) {
+                                            seenUrls.add(url);
+                                            allSlips.push({ id: `${item.name}/${sub.name}`, payment_proof_url: url });
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            } catch (storageError) {
+                console.warn("Storage listing failed (RLS), using database results only:", storageError);
             }
 
             setSlips(allSlips);
@@ -98,7 +127,7 @@ const PaymentSlipsSection = () => {
           100% { transform: translateX(-50%); }
         }
         .animate-scroll-slips {
-          animation: scroll-slips 40s linear infinite;
+          animation: scroll-slips 60s linear infinite;
         }
       `}</style>
 
