@@ -49,12 +49,10 @@ const PaymentSlipsSection = () => {
             const from = page * PAGE_SIZE;
             const to = from + PAGE_SIZE - 1;
 
-            const { data: dbData, error } = await supabase
-                .from("orders")
+            // Query from public view — no RLS issues, fast & secure
+            const { data, error } = await supabase
+                .from("payment_slips_public" as any)
                 .select("id, payment_proof_url")
-                .not("payment_proof_url", "is", null)
-                .in("status", ["paid", "processing", "completed"])
-                .order("updated_at", { ascending: false })
                 .range(from, to);
 
             if (error) {
@@ -63,23 +61,22 @@ const PaymentSlipsSection = () => {
                 return;
             }
 
-            if (!dbData || dbData.length === 0) {
+            if (!data || data.length === 0) {
                 setHasMore(false);
                 return;
             }
 
-            // Mark no more pages if we got fewer than PAGE_SIZE
-            if (dbData.length < PAGE_SIZE) {
+            if (data.length < PAGE_SIZE) {
                 setHasMore(false);
             }
 
             const newSlips: SlipData[] = [];
-            for (const order of dbData) {
-                if (order.payment_proof_url && !seenUrlsRef.current.has(order.payment_proof_url)) {
-                    seenUrlsRef.current.add(order.payment_proof_url);
+            for (const row of data as any[]) {
+                if (row.payment_proof_url && !seenUrlsRef.current.has(row.payment_proof_url)) {
+                    seenUrlsRef.current.add(row.payment_proof_url);
                     newSlips.push({
-                        id: order.id,
-                        payment_proof_url: order.payment_proof_url,
+                        id: row.id,
+                        payment_proof_url: row.payment_proof_url,
                     });
                 }
             }
@@ -126,7 +123,7 @@ const PaymentSlipsSection = () => {
           100% { transform: translateX(-50%); }
         }
         .animate-scroll-slips {
-          animation: scroll-slips 80s linear infinite;
+          animation: scroll-slips 70s linear infinite;
         }
       `}</style>
 
