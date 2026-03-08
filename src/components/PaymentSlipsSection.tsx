@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SlipData {
@@ -34,85 +34,101 @@ const SlipCard = memo(({ slip }: { slip: SlipData }) => {
 
 SlipCard.displayName = "SlipCard";
 
+// Fetch a page of slips — try view first, fallback to orders table
+const fetchPage = async (page: number): Promise<{ rows: SlipData[]; isLast: boolean }> => {
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    // Try 1: public view (fast, no RLS)
+    const { data: viewData, error: viewError } = await supabase
+        .from("payment_slips_public" as any)
+        .select("id, payment_proof_url")
+        .range(from, to);
+
+    if (!viewError && viewData && viewData.length > 0) {
+        return {
+            rows: (viewData as any[]).map(r => ({ id: r.id, payment_proof_url: r.payment_proof_url })),
+            isLast: viewData.length < PAGE_SIZE,
+        };
+    }
+
+    // Try 2: fallback to orders table directly
+    const { data: orderData, error: orderError } = await supabase
+        .from("orders")
+        .select("id, payment_proof_url")
+        .not("payment_proof_url", "is", null)
+        .in("status", ["paid", "processing", "completed"])
+        .order("updated_at", { ascending: false })
+        .range(from, to);
+
+    if (orderError || !orderData) {
+        console.error("Error fetching slips:", viewError || orderError);
+        return { rows: [], isLast: true };
+    }
+
+    return {
+        rows: orderData
+            .filter(r => r.payment_proof_url)
+            .map(r => ({ id: r.id, payment_proof_url: r.payment_proof_url! })),
+        isLast: orderData.length < PAGE_SIZE,
+    };
+};
+
 const PaymentSlipsSection = () => {
     const [slips, setSlips] = useState<SlipData[]>([]);
+    const [loading, setLoading] = useState(true);
     const [hasMore, setHasMore] = useState(true);
-    const seenUrlsRef = useRef(new Set<string>());
-    const pageRef = useRef(0);
-    const isFetchingRef = useRef(false);
+    const [currentPage, setCurrentPage] = useState(0);
 
-    const fetchSlipsPage = useCallback(async (page: number) => {
-        if (isFetchingRef.current) return;
-        isFetchingRef.current = true;
-
-        try {
-            const from = page * PAGE_SIZE;
-            const to = from + PAGE_SIZE - 1;
-
-            // Query from public view — no RLS issues, fast & secure
-            const { data, error } = await supabase
-                .from("payment_slips_public" as any)
-                .select("id, payment_proof_url")
-                .range(from, to);
-
-            if (error) {
-                console.error("Error fetching payment slips page:", error);
-                setHasMore(false);
-                return;
-            }
-
-            if (!data || data.length === 0) {
-                setHasMore(false);
-                return;
-            }
-
-            if (data.length < PAGE_SIZE) {
-                setHasMore(false);
-            }
-
-            const newSlips: SlipData[] = [];
-            for (const row of data as any[]) {
-                if (row.payment_proof_url && !seenUrlsRef.current.has(row.payment_proof_url)) {
-                    seenUrlsRef.current.add(row.payment_proof_url);
-                    newSlips.push({
-                        id: row.id,
-                        payment_proof_url: row.payment_proof_url,
-                    });
-                }
-            }
-
-            if (newSlips.length > 0) {
-                setSlips(prev => [...prev, ...newSlips]);
-            }
-        } catch (error) {
-            console.error("Error fetching payment slips:", error);
-            setHasMore(false);
-        } finally {
-            isFetchingRef.current = false;
-        }
+    // Deduplicate and append new slips
+    const appendSlips = useCallback((newRows: SlipData[]) => {
+        setSlips(prev => {
+            const existingUrls = new Set(prev.map(s => s.payment_proof_url));
+            const unique = newRows.filter(r => !existingUrls.has(r.payment_proof_url));
+            return unique.length > 0 ? [...prev, ...unique] : prev;
+        });
     }, []);
 
-    // Initial load: fetch first page immediately
+    // Initial load — first 10 slips
     useEffect(() => {
-        fetchSlipsPage(0);
-    }, [fetchSlipsPage]);
+        let cancelled = false;
 
-    // Progressive loading: fetch remaining pages in the background
-    useEffect(() => {
-        if (slips.length === 0 || !hasMore) return;
-
-        const loadMore = async () => {
-            pageRef.current += 1;
-            await fetchSlipsPage(pageRef.current);
+        const loadFirst = async () => {
+            setLoading(true);
+            const { rows, isLast } = await fetchPage(0);
+            if (cancelled) return;
+            appendSlips(rows);
+            setHasMore(!isLast);
+            setCurrentPage(0);
+            setLoading(false);
         };
 
-        // Delay subsequent pages to prioritize initial render
-        const timer = setTimeout(loadMore, 1500);
-        return () => clearTimeout(timer);
-    }, [slips.length, hasMore, fetchSlipsPage]);
+        loadFirst();
+        return () => { cancelled = true; };
+    }, [appendSlips]);
 
-    // Don't render the section if no slips
-    if (slips.length === 0) return null;
+    // Progressive background loading — page 1, 2, 3...
+    useEffect(() => {
+        if (loading || !hasMore) return;
+
+        let cancelled = false;
+        const timer = setTimeout(async () => {
+            const nextPage = currentPage + 1;
+            const { rows, isLast } = await fetchPage(nextPage);
+            if (cancelled) return;
+            appendSlips(rows);
+            setHasMore(!isLast);
+            setCurrentPage(nextPage);
+        }, 1500);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
+    }, [loading, hasMore, currentPage, appendSlips]);
+
+    // Show nothing only if loading is done and still no slips
+    if (!loading && slips.length === 0) return null;
 
     return (
         <section className="py-16 bg-gradient-to-b from-background to-secondary/20 relative overflow-hidden">
@@ -139,13 +155,26 @@ const PaymentSlipsSection = () => {
             </div>
 
             {/* Auto-scrolling Slips */}
-            <div className="flex w-full overflow-hidden">
-                <div className="flex animate-scroll-slips w-max">
-                    {[...slips, ...slips, ...slips, ...slips].map((slip, i) => (
-                        <SlipCard key={`slip-${i}-${slip.id}`} slip={slip} />
-                    ))}
+            {slips.length > 0 ? (
+                <div className="flex w-full overflow-hidden">
+                    <div className="flex animate-scroll-slips w-max">
+                        {[...slips, ...slips, ...slips, ...slips].map((slip, i) => (
+                            <SlipCard key={`slip-${i}-${slip.id}`} slip={slip} />
+                        ))}
+                    </div>
                 </div>
-            </div>
+            ) : (
+                <div className="flex justify-center items-center h-[260px] md:h-[320px]">
+                    <div className="flex gap-4">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div
+                                key={i}
+                                className="w-[180px] md:w-[220px] h-[260px] md:h-[320px] rounded-xl bg-gray-200 animate-pulse"
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
         </section>
     );
 };
