@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SlipData {
@@ -6,7 +6,7 @@ interface SlipData {
     payment_proof_url: string;
 }
 
-const SUPABASE_URL = "https://iiimpsfjzcgxcoxvveis.supabase.co";
+const PAGE_SIZE = 10;
 
 const SlipCard = memo(({ slip }: { slip: SlipData }) => {
     const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
@@ -36,81 +36,83 @@ SlipCard.displayName = "SlipCard";
 
 const PaymentSlipsSection = () => {
     const [slips, setSlips] = useState<SlipData[]>([]);
+    const [hasMore, setHasMore] = useState(true);
+    const seenUrlsRef = useRef(new Set<string>());
+    const pageRef = useRef(0);
+    const isFetchingRef = useRef(false);
 
-    useEffect(() => {
-        fetchSlips();
-    }, []);
+    const fetchSlipsPage = useCallback(async (page: number) => {
+        if (isFetchingRef.current) return;
+        isFetchingRef.current = true;
 
-    const fetchSlips = async () => {
         try {
-            const allSlips: SlipData[] = [];
-            const seenUrls = new Set<string>();
+            const from = page * PAGE_SIZE;
+            const to = from + PAGE_SIZE - 1;
 
-            // 1. Primary: Fetch from database (reliable, works with anon key)
-            const { data: dbData } = await supabase
+            const { data: dbData, error } = await supabase
                 .from("orders")
                 .select("id, payment_proof_url")
                 .not("payment_proof_url", "is", null)
                 .in("status", ["paid", "processing", "completed"])
                 .order("updated_at", { ascending: false })
-                .limit(30);
+                .range(from, to);
 
-            if (dbData) {
-                for (const order of dbData) {
-                    if (order.payment_proof_url && !seenUrls.has(order.payment_proof_url)) {
-                        seenUrls.add(order.payment_proof_url);
-                        allSlips.push({
-                            id: order.id,
-                            payment_proof_url: order.payment_proof_url,
-                        });
-                    }
+            if (error) {
+                console.error("Error fetching payment slips page:", error);
+                setHasMore(false);
+                return;
+            }
+
+            if (!dbData || dbData.length === 0) {
+                setHasMore(false);
+                return;
+            }
+
+            // Mark no more pages if we got fewer than PAGE_SIZE
+            if (dbData.length < PAGE_SIZE) {
+                setHasMore(false);
+            }
+
+            const newSlips: SlipData[] = [];
+            for (const order of dbData) {
+                if (order.payment_proof_url && !seenUrlsRef.current.has(order.payment_proof_url)) {
+                    seenUrlsRef.current.add(order.payment_proof_url);
+                    newSlips.push({
+                        id: order.id,
+                        payment_proof_url: order.payment_proof_url,
+                    });
                 }
             }
 
-            // 2. Secondary: Try listing storage bucket directly (may fail due to RLS)
-            try {
-                const { data: rootItems } = await supabase.storage
-                    .from("payment-slips")
-                    .list("", { limit: 100 });
-
-                if (rootItems) {
-                    for (const item of rootItems) {
-                        if (item.name && item.metadata) {
-                            // File at root level
-                            const url = `${SUPABASE_URL}/storage/v1/object/public/payment-slips/${item.name}`;
-                            if (!seenUrls.has(url)) {
-                                seenUrls.add(url);
-                                allSlips.push({ id: item.name, payment_proof_url: url });
-                            }
-                        } else if (item.name && !item.metadata) {
-                            // Folder — list files inside
-                            const { data: subItems } = await supabase.storage
-                                .from("payment-slips")
-                                .list(item.name, { limit: 10 });
-
-                            if (subItems) {
-                                for (const sub of subItems) {
-                                    if (sub.name && sub.metadata) {
-                                        const url = `${SUPABASE_URL}/storage/v1/object/public/payment-slips/${item.name}/${sub.name}`;
-                                        if (!seenUrls.has(url)) {
-                                            seenUrls.add(url);
-                                            allSlips.push({ id: `${item.name}/${sub.name}`, payment_proof_url: url });
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (storageError) {
-                console.warn("Storage listing failed (RLS), using database results only:", storageError);
+            if (newSlips.length > 0) {
+                setSlips(prev => [...prev, ...newSlips]);
             }
-
-            setSlips(allSlips);
         } catch (error) {
             console.error("Error fetching payment slips:", error);
+            setHasMore(false);
+        } finally {
+            isFetchingRef.current = false;
         }
-    };
+    }, []);
+
+    // Initial load: fetch first page immediately
+    useEffect(() => {
+        fetchSlipsPage(0);
+    }, [fetchSlipsPage]);
+
+    // Progressive loading: fetch remaining pages in the background
+    useEffect(() => {
+        if (slips.length === 0 || !hasMore) return;
+
+        const loadMore = async () => {
+            pageRef.current += 1;
+            await fetchSlipsPage(pageRef.current);
+        };
+
+        // Delay subsequent pages to prioritize initial render
+        const timer = setTimeout(loadMore, 1500);
+        return () => clearTimeout(timer);
+    }, [slips.length, hasMore, fetchSlipsPage]);
 
     // Don't render the section if no slips
     if (slips.length === 0) return null;
