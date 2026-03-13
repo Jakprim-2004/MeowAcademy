@@ -129,7 +129,7 @@ const Register = () => {
     },
     package: {
       title: "แพ็คเกจ 36 ชั่วโมง",
-      price: 120,
+      price: 150,
       unit: "บาท",
       description: "ประหยัดกว่าเมื่อเทียบกับรายชั่วโมง",
       isPackage: true,
