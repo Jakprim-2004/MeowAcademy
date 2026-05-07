@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import Script from "next/script";
 import "@/globals.css";
 
 const SITE_URL = "https://meow-loan.com";
@@ -9,7 +10,7 @@ const SITE_URL = "https://meow-loan.com";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "MeowAcademy - รับจ้างเก็บชั่วโมงจิตอาสา กยศ. | บริการเชื่อถือได้",
+    default: "รับจ้างเก็บชั่วโมงจิตอาสา กยศ. | MeowAcademy",
     template: "%s | MeowAcademy",
   },
   description:
@@ -89,7 +90,24 @@ const jsonLd = {
         contactType: "customer service",
         availableLanguage: "Thai",
       },
-      sameAs: ["https://line.me/R/ti/p/@807chkoh"],
+      sameAs: ["https://line.me/R/ti/p/@807chkoh", "https://facebook.com/meowacademy", "https://instagram.com/meowacademy"],
+    },
+    {
+      "@type": "LocalBusiness",
+      "@id": `${SITE_URL}/#localbusiness`,
+      name: "MeowAcademy",
+      url: SITE_URL,
+      telephone: "+66-000-000-000",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: "Online Service",
+        addressLocality: "Bangkok",
+        addressRegion: "Bangkok",
+        postalCode: "10110",
+        addressCountry: "TH"
+      },
+      image: `${SITE_URL}/images/cat-icons/logo_cat.png`,
+      priceRange: "$"
     },
     {
       "@type": "WebSite",
@@ -204,6 +222,25 @@ export default function RootLayout({
         />
       </head>
       <body>
+        {/* Google Analytics Placeholder */}
+        <Script
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX`}
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-XXXXXXXXXX', {
+                page_path: window.location.pathname,
+              });
+            `,
+          }}
+        />
         <TooltipProvider>
           <Toaster />
           <Sonner />
