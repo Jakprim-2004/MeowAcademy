@@ -1,8 +1,9 @@
+"use client";
+
 import { ArrowRight, Sparkles, Clock, Users, Shield } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import catMascot from "@/assets/cat-mascot.png";
 
 const HeroSection = () => {
   const [totalOrders, setTotalOrders] = useState(82);
@@ -96,9 +97,12 @@ const HeroSection = () => {
 
             {/* Cat image */}
             <img
-              src={catMascot}
-              alt="MeowAcademy Mascot"
+              src="/images/cat-mascot.png"
+              alt="MeowAcademy - บริการรับจ้างเก็บชั่วโมงจิตอาสา กยศ. สำหรับนักศึกษา"
               className="relative w-96 md:w-[500px] lg:w-[600px] animate-bounce-slow drop-shadow-2xl"
+              width={600}
+              height={600}
+              loading="eager"
             />
 
           </div>

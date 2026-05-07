@@ -1,10 +1,12 @@
+"use client";
+
 import {
     Accordion,
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
 } from "./ui/accordion";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { FileText, Shield } from "lucide-react";
 
 const FAQSection = () => {
@@ -66,7 +68,7 @@ const FAQSection = () => {
                 <div className="mt-10 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
                     <div className="rounded-2xl border border-border bg-card p-6 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
                         <Link
-                            to="/terms"
+                            href="/terms"
                             className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors font-medium"
                         >
                             <FileText className="w-4 h-4" />
@@ -74,7 +76,7 @@ const FAQSection = () => {
                         </Link>
                         <span className="hidden sm:inline text-border">|</span>
                         <Link
-                            to="/privacy"
+                            href="/privacy"
                             className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors font-medium"
                         >
                             <Shield className="w-4 h-4" />

@@ -1,10 +1,13 @@
-import { Link, useLocation } from "react-router-dom";
-import { Home, LayoutDashboard, Package, FileText, User as UserIcon, LogOut } from "lucide-react";
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { Home, LayoutDashboard, Package, FileText, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import Logo from "./Logo";
 
 interface SidebarProps {
@@ -12,20 +15,19 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ className }: SidebarProps) => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const pathname = location.pathname;
+    const pathname = usePathname();
+    const router = useRouter();
 
     const handleLogout = async () => {
         try {
-            await supabase.auth.signOut();
+            await supabase?.auth?.signOut();
             localStorage.clear();
             sessionStorage.clear();
             toast.success("ออกจากระบบเรียบร้อย");
-            navigate("/login");
+            router.push("/login");
         } catch (error) {
             console.error("Logout error:", error);
-            navigate("/login");
+            router.push("/login");
         }
     };
 
@@ -56,9 +58,7 @@ const Sidebar = ({ className }: SidebarProps) => {
         <div className={cn("flex flex-col h-full bg-card border-r border-border", className)}>
             {/* Logo */}
             <div className="p-6 border-b border-border">
-                <Link to="/" className="flex items-center gap-2 group">
-                    <Logo size="sm" />
-                </Link>
+                <Logo size="sm" />
             </div>
 
             {/* Navigation */}
@@ -66,7 +66,7 @@ const Sidebar = ({ className }: SidebarProps) => {
                 {menuItems.map((item) => (
                     <Link
                         key={item.href}
-                        to={item.href}
+                        href={item.href}
                         className={cn(
                             "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden",
                             pathname === item.href

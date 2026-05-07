@@ -1,3 +1,4 @@
+"use client";
 import { Clock, Users, Shield, ExternalLink } from "lucide-react";
 import { Button } from "./ui/button";
 

@@ -1,3 +1,5 @@
+"use client";
+
 import Logo from "./Logo";
 import UserDropdown from "./UserDropdown";
 import type { User as SupabaseUser } from "@supabase/supabase-js";

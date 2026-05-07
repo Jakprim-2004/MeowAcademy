@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg";
@@ -20,11 +22,11 @@ const textClasses = {
 
 const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
   return (
-    <Link to="/" className={`flex items-center gap-2 group ${className}`}>
+    <Link href="/" className={`flex items-center gap-2 group ${className}`}>
       <div className={`${sizeClasses[size]} rounded-xl flex items-center justify-center transition-all group-hover:scale-110`}>
         <img 
           src="/images/cat-icons/logo_cat.png" 
-          alt="MeowAcademy Logo" 
+          alt="MeowAcademy Logo - บริการเก็บชั่วโมงจิตอาสา กยศ." 
           className="w-full h-full object-contain drop-shadow-md" 
         />
       </div>

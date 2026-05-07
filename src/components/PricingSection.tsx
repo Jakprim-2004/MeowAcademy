@@ -1,18 +1,20 @@
+"use client";
+
 import { Check, Sparkles, Clock, FileText } from "lucide-react";
 import { Button } from "./ui/button";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Badge } from "./ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 
 const PricingSection = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleBooking = async (href: string) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      navigate("/login");
+      router.push("/login");
     } else {
-      navigate(href);
+      router.push(href);
     }
   };
 

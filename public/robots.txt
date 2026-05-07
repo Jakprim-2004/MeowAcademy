@@ -1,8 +1,17 @@
+# MeowAcademy - robots.txt
+# https://meow-loan.com
+
 User-agent: Googlebot
 Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /order-status
 
 User-agent: Bingbot
 Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /order-status
 
 User-agent: Twitterbot
 Allow: /
@@ -12,3 +21,9 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /order-status
+
+# Sitemap
+Sitemap: https://meowacademy.vercel.app/sitemap.xml

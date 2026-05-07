@@ -1,7 +1,7 @@
 import { LucideIcon, Check } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 
 interface ServiceCardProps {
   title: string;
@@ -80,7 +80,7 @@ const ServiceCard = ({
         }`}
         asChild
       >
-        <Link to={href}>{buttonText}</Link>
+        <Link href={href}>{buttonText}</Link>
       </Button>
     </div>
   );

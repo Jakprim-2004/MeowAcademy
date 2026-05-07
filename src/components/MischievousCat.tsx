@@ -1,7 +1,9 @@
+"use client";
+
 import { useState, useEffect, useRef } from 'react';
 // import { Cat } from 'lucide-react'; // Removed lucide icon import
 import { cn } from '@/lib/utils';
-import { useLocation } from 'react-router-dom';
+import { usePathname } from 'next/navigation';
 
 const MischievousCat = () => {
     const [isVisible, setIsVisible] = useState(true);
@@ -9,7 +11,7 @@ const MischievousCat = () => {
     const [mode, setMode] = useState<'peeking' | 'idle'>('idle');
     const [dialogue, setDialogue] = useState<string | null>(null);
 
-    const location = useLocation();
+    const pathname = usePathname();
     const peekTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Peeking Logic (Random intervals)

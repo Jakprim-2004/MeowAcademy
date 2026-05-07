@@ -1,5 +1,8 @@
+"use client";
+
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -8,7 +11,7 @@ import Logo from "./Logo";
 
 const Navbar = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   useEffect(() => {
     const checkSession = async () => {
@@ -27,14 +30,14 @@ const Navbar = () => {
 
       if (_event === 'SIGNED_OUT') {
         setUser(null);
-        navigate("/login");
+        router.push("/login");
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [router]);
 
   const navLinks = [
     { name: "หน้าหลัก", href: "/" },
@@ -48,9 +51,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <Logo size="md" />
-          </Link>
+          <Logo size="md" />
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
@@ -72,7 +73,7 @@ const Navbar = () => {
               <UserDropdown user={user} />
             ) : (
               <Button className="bg-hero-gradient hover:opacity-90 shadow-md font-medium px-4 md:px-6" asChild>
-                <Link to="/login">เข้าสู่ระบบ</Link>
+                <Link href="/login">เข้าสู่ระบบ</Link>
               </Button>
             )}
           </div>

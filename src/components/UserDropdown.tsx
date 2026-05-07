@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { User, LogOut, Home, LayoutDashboard, ShieldCheck, Star, Link2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -22,7 +24,7 @@ interface UserDropdownProps {
 }
 
 const UserDropdown = ({ user }: UserDropdownProps) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const isLoggingOut = useRef(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCheckingRole, setIsCheckingRole] = useState(true);
@@ -82,11 +84,11 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
       });
 
       toast.success("ออกจากระบบเรียบร้อย");
-      navigate("/login");
+      router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
       localStorage.clear();
-      navigate("/login");
+      router.push("/login");
     } finally {
       isLoggingOut.current = false;
     }
@@ -153,7 +155,6 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
                 🛠️ เมนูแอดมิน
               </DropdownMenuLabel>
               
-              {/* Admin Dashboard */}
               <DropdownMenuItem asChild>
                 <a href="/admin" className="cursor-pointer flex items-center gap-2 px-2 py-2 rounded-md text-primary">
                   <ShieldCheck className="w-4 h-4" />
@@ -161,7 +162,6 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
                 </a>
               </DropdownMenuItem>
 
-              {/* Review Management */}
               <DropdownMenuItem asChild>
                 <a href="/admin/reviews" className="cursor-pointer flex items-center gap-2 px-2 py-2 rounded-md text-primary">
                   <Star className="w-4 h-4" />
@@ -169,7 +169,6 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
                 </a>
               </DropdownMenuItem>
 
-              {/* Create Review Link Button */}
               <DropdownMenuItem asChild>
                 <a 
                   href="/admin/reviews?tab=create" 

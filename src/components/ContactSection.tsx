@@ -1,3 +1,4 @@
+"use client";
 import { MessageCircle, HelpCircle } from "lucide-react";
 import { Button } from "./ui/button";
 
