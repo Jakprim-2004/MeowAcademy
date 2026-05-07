@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Script from "next/script";
 import "@/globals.css";
 
-const SITE_URL = "https://meow-loan.com";
+const SITE_URL = "https://meowacademy.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
