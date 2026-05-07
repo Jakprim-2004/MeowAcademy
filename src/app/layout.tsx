@@ -222,6 +222,13 @@ export default function RootLayout({
         />
       </head>
       <body>
+        {/* Ahrefs Web Analytics */}
+        <Script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="tHuOHJKSMUV0St5k5q2H9A"
+          strategy="afterInteractive"
+        />
+
         {/* Google Analytics Placeholder */}
         <Script
           strategy="afterInteractive"
