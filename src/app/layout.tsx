@@ -10,7 +10,7 @@ const SITE_URL = "https://meowacademy.vercel.app";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "เก็บชั่วโมง กยศ ออนไลน์ บริการรับจ้างจิตอาสา | MeowAcademy",
+    default: "รับจ้างเก็บชั่วโมง กยศ ออนไลน์ | MeowAcademy",
     template: "%s | MeowAcademy",
   },
   description:
@@ -224,6 +224,10 @@ export default function RootLayout({
         <link
           rel="icon"
           type="image/png"
+          href="/images/cat-icons/logo_cat.png"
+        />
+        <link
+          rel="apple-touch-icon"
           href="/images/cat-icons/logo_cat.png"
         />
         <script
