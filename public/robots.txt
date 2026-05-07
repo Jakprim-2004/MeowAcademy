@@ -1,5 +1,5 @@
 # MeowAcademy - robots.txt
-# https://meow-loan.com
+# https://meowacademy.vercel.app
 
 User-agent: Googlebot
 Allow: /
