@@ -107,7 +107,12 @@ const jsonLd = {
         addressCountry: "TH"
       },
       image: `${SITE_URL}/images/cat-icons/logo_cat.png`,
-      priceRange: "$"
+      priceRange: "$",
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "4.9",
+        reviewCount: "82"
+      }
     },
     {
       "@type": "WebSite",
@@ -129,6 +134,11 @@ const jsonLd = {
       areaServed: {
         "@type": "Country",
         name: "Thailand",
+      },
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "4.9",
+        reviewCount: "82"
       },
       offers: [
         {
