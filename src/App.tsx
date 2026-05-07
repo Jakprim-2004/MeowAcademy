@@ -13,6 +13,8 @@ import ReviewManagement from "./pages/ReviewManagement";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import OrderStatus from "./pages/OrderStatus";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 
 const queryClient = new QueryClient();
@@ -57,6 +59,8 @@ const App = () => {
             <Route path="/order-status" element={<OrderStatus />} />
             <Route path="/rate-review/:orderId" element={<RateReview />} />
             <Route path="/review/:token" element={<RateReview />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

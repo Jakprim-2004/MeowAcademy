@@ -197,9 +197,9 @@ const Login = () => {
             <p className="text-center text-sm text-muted-foreground mt-6">
               เมื่อเข้าสู่ระบบ แสดงว่าคุณยอมรับ
               <br />
-              <a href="#" className="text-primary hover:underline">ข้อกำหนดการใช้งาน</a>
+              <Link to="/terms" className="text-primary hover:underline">ข้อกำหนดการใช้งาน</Link>
               {" "}และ{" "}
-              <a href="#" className="text-primary hover:underline">นโยบายความเป็นส่วนตัว</a>
+              <Link to="/privacy" className="text-primary hover:underline">นโยบายความเป็นส่วนตัว</Link>
             </p>
           </div>
         </div>
