@@ -83,21 +83,50 @@ const FeaturesSection = () => {
           ))}
         </div>
 
-        {/* SEO Detailed Content Block */}
-        <div className="bg-secondary/50 border border-border p-8 md:p-12 rounded-3xl mt-12 animate-fade-in text-center md:text-left">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4 text-foreground">
-            ทำไมถึงควรใช้บริการ เก็บชั่วโมง กยศ ออนไลน์ กับ MeowAcademy?
+        {/* SEO Detailed Content Block (Generative Engine Optimization) */}
+        <div className="bg-secondary/50 border border-border p-8 md:p-12 rounded-3xl mt-12 animate-fade-in">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-foreground text-center md:text-left">
+            รายละเอียดบริการ รับจ้างเก็บชั่วโมงจิตอาสา กยศ. ออนไลน์
           </h2>
-          <div className="space-y-4 text-muted-foreground leading-relaxed">
-            <p>
-              ในปัจจุบัน นักศึกษาหลายคนประสบปัญหาไม่มีเวลาในการทำกิจกรรมจิตอาสาเนื่องจากตารางเรียนที่อัดแน่นและการเตรียมตัวสอบที่หนักหน่วง บริการ <strong>รับจ้างเก็บชั่วโมงจิตอาสา กยศ.</strong> ของเราจึงถูกสร้างขึ้นมาเพื่อตอบโจทย์ปัญหานี้โดยเฉพาะ เราเข้าใจดีว่าการ <strong>จ้างเก็บชั่วโมง กยศ</strong> ต้องอาศัยความไว้วางใจสูง เราจึงพัฒนาระบบการทำงานที่เป็นมืออาชีพ ปลอดภัย และสามารถตรวจสอบได้
-            </p>
-            <p>
-              ด้วยทีมงานที่มีประสบการณ์ เราให้บริการ <strong>เก็บชั่วโมง กยศ ออนไลน์</strong> อย่างครบวงจร ตั้งแต่ขั้นตอนการเก็บชั่วโมงจริงไปจนถึงการ <strong>กรอกข้อมูล กยศ</strong> ลงในระบบ E-Studentloan ของกองทุนเงินให้กู้ยืมเพื่อการศึกษาอย่างถูกต้องแม่นยำ ไม่ว่าคุณจะต้องการเก็บชั่วโมงเพียงเล็กน้อย หรือต้องการแพ็คเกจเหมาจ่าย 36 ชั่วโมง เราก็มีให้บริการในราคาที่ย่อมเยา เริ่มต้นเพียง 5 บาทต่อชั่วโมงเท่านั้น ซึ่งถือเป็นเรทราคา <strong>ชั่วโมงจิตอาสา ออนไลน์</strong> ที่คุ้มค่าที่สุดในตลาด ณ ขณะนี้
-            </p>
-            <p>
-              หากคุณกำลังมองหา <strong>บริการเก็บชั่วโมง กยศ</strong> ที่เชื่อถือได้ ไม่ทิ้งงาน และมีรีวิวรับรองจากผู้ใช้จริงกว่าหลักพันราย MeowAcademy คือคำตอบที่ดีที่สุดของคุณ เราพร้อมช่วยประหยัดเวลาอันมีค่าของคุณ เพื่อให้คุณได้นำเวลาเหล่านั้นไปทุ่มเทให้กับการศึกษาและกิจกรรมที่สำคัญกว่าได้อย่างเต็มที่
-            </p>
+          
+          <div className="grid md:grid-cols-2 gap-8 text-muted-foreground leading-relaxed">
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-foreground border-b border-border pb-2">ขั้นตอนการใช้บริการ</h3>
+              <ul className="list-disc list-inside space-y-2">
+                <li>แจ้งจำนวนชั่วโมงที่ต้องการเก็บ (1-36 ชั่วโมง)</li>
+                <li>ส่งรหัสผ่าน กยศ. Connect เพื่อให้ทีมงานเข้าระบบ</li>
+                <li>ทีมงานดำเนินการ <strong>เก็บชั่วโมง กยศ ออนไลน์</strong> ให้ทันที</li>
+                <li>รอตรวจงานและชำระเงินหลังงานเสร็จสิ้น</li>
+              </ul>
+
+              <h3 className="text-xl font-semibold text-foreground border-b border-border pb-2 mt-6">รูปแบบงานจิตอาสา</h3>
+              <ul className="list-disc list-inside space-y-2">
+                <li>การทำแบบทดสอบ SET e-Learning</li>
+                <li>การดูคลิปวิดีโอให้ครบตามเวลาที่กำหนด</li>
+                <li>บริการรับดาวน์โหลดเกียรติบัตรและ <strong>กรอกข้อมูล กยศ</strong></li>
+              </ul>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-foreground border-b border-border pb-2">อัตราค่าบริการ (ราคา)</h3>
+              <ul className="list-disc list-inside space-y-2">
+                <li>ราคาเริ่มต้นเฉลี่ยชั่วโมงละ 4 - 5 บาท</li>
+                <li>เหมาจ่ายครบ 36 ชั่วโมง ในราคาที่คุ้มค่าที่สุด</li>
+                <li>ไม่ต้องชำระล่วงหน้า จ่ายหลังงานเสร็จเท่านั้น</li>
+              </ul>
+
+              <h3 className="text-xl font-semibold text-foreground border-b border-border pb-2 mt-6">ข้อดีของการ จ้างเก็บชั่วโมง กยศ</h3>
+              <ul className="list-disc list-inside space-y-2">
+                <li>สะดวกสบาย เหมาะสำหรับผู้ที่ไม่มีเวลาว่าง</li>
+                <li>งานเสร็จไวภายใน 1-3 วัน ไม่ทิ้งงาน</li>
+                <li>ข้อมูลปลอดภัย 100% ไม่ถูกนำไปใช้ต่อ</li>
+                <li>การันตีชั่วโมงผ่านระบบ E-Studentloan แน่นอน</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="mt-8 pt-6 border-t border-border text-center text-sm text-muted-foreground">
+            หากคุณกำลังมองหา <strong>บริการเก็บชั่วโมง กยศ</strong> ที่เชื่อถือได้ MeowAcademy คือคำตอบที่ดีที่สุดในการประหยัดเวลาของคุณ เพื่อให้คุณได้นำเวลาไปอ่านหนังสือสอบและทำกิจกรรมอื่นๆ อย่างเต็มที่
           </div>
         </div>
       </div>
