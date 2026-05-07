@@ -52,12 +52,13 @@ const HeroSection = () => {
               <span className="text-sm font-medium text-muted-foreground">บริการเชื่อถือได้ รวดเร็ว ปลอดภัย</span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
-              <span className="text-gradient">MeowAcademy</span>
+            <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight flex flex-col gap-2">
+              <span className="text-foreground text-3xl md:text-4xl lg:text-5xl">บริการรับจ้าง</span>
+              <span className="text-gradient">เก็บชั่วโมง กยศ ออนไลน์</span>
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground w-full select-none">
-              รับจ้างเก็บชั่วโมงจิตอาสาและกรอกข้อมูลลงระบบ{" "}
+              ทำจิตอาสาโดยทีมงานมืออาชีพ <span className="font-semibold text-foreground">MeowAcademy</span>{" "}
               <span className="text-foreground font-semibold whitespace-nowrap">ง่าย สะดวก รวดเร็ว</span>
             </p>
 
