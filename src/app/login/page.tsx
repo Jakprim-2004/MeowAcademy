@@ -43,14 +43,16 @@ const LoginContent = () => {
   const handleLineCallback = async (code: string) => {
     setIsLoading(true);
     try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://iiimpsfjzcgxcoxvveis.supabase.co";
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_ijl_h-HSSVhvLNv5zWV5Tg_jrxhbX41";
       const redirectUri = `${window.location.origin}/login`;
-      const functionUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/line-auth?action=callback`;
+      const functionUrl = `${supabaseUrl}/functions/v1/line-auth?action=callback`;
       
       const response = await fetch(functionUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+          "apikey": supabaseKey,
         },
         body: JSON.stringify({ code, redirectUri }),
       });
@@ -90,14 +92,16 @@ const LoginContent = () => {
   const handleLineLogin = async () => {
     setIsLoading(true);
     try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://iiimpsfjzcgxcoxvveis.supabase.co";
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_ijl_h-HSSVhvLNv5zWV5Tg_jrxhbX41";
       const redirectUri = `${window.location.origin}/login`;
-      const functionUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/line-auth?action=login-url`;
+      const functionUrl = `${supabaseUrl}/functions/v1/line-auth?action=login-url`;
 
       const urlResponse = await fetch(functionUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+          "apikey": supabaseKey,
         },
         body: JSON.stringify({ redirectUri }),
       });
