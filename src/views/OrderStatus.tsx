@@ -113,6 +113,15 @@ const OrderStatus = () => {
     if (!user) return;
     setIsLoading(true);
     try {
+      // Auto-cancel pending orders older than 24 hours
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      await supabase
+        .from('orders')
+        .update({ status: 'cancelled' })
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
+        .lt('created_at', twentyFourHoursAgo);
+
       // Get total count — filtered by current user
       const { count, error: countError } = await supabase
         .from('orders')
@@ -248,6 +257,13 @@ const OrderStatus = () => {
                 const StatusIcon = status.icon;
                 const isPending = order.status === 'pending';
 
+                // Calculate remaining time for pending orders (24h deadline)
+                const createdAt = new Date(order.created_at).getTime();
+                const deadline = createdAt + 24 * 60 * 60 * 1000;
+                const remaining = deadline - Date.now();
+                const hoursLeft = Math.max(0, Math.floor(remaining / (1000 * 60 * 60)));
+                const minutesLeft = Math.max(0, Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60)));
+
                 return (
                   <Card
                     key={order.id}
@@ -283,7 +299,18 @@ const OrderStatus = () => {
                           {status.label}
                         </Badge>
                       </div>
-                    </CardHeader>
+
+                      {/* Countdown timer for pending orders */}
+                      {isPending && remaining > 0 && (
+                        <div className={`text-xs px-3 py-1 rounded-full ${hoursLeft < 6 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                          ⏰ เหลือเวลาชำระ {hoursLeft} ชม. {minutesLeft} นาที
+                        </div>
+                      )}
+                      {isPending && remaining <= 0 && (
+                        <div className="text-xs px-3 py-1 rounded-full bg-red-100 text-red-700">
+                          ⏰ หมดเวลาชำระแล้ว - จะถูกยกเลิกอัตโนมัติ
+                        </div>
+                      )}
 
                     <CardContent>
                       <div className="flex flex-wrap gap-4 text-sm">
