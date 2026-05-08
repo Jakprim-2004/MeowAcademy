@@ -90,7 +90,7 @@ const jsonLd = {
         contactType: "customer service",
         availableLanguage: "Thai",
       },
-      sameAs: ["https://line.me/R/ti/p/@807chkoh", "https://facebook.com/meowacademy", "https://instagram.com/meowacademy"],
+      sameAs: ["https://line.me/R/ti/p/@807chkoh", "https://facebook.com", "https://instagram.com"],
     },
     {
       "@type": "LocalBusiness",
@@ -134,11 +134,6 @@ const jsonLd = {
       areaServed: {
         "@type": "Country",
         name: "Thailand",
-      },
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: "4.9",
-        reviewCount: "82"
       },
       offers: [
         {
@@ -209,6 +204,32 @@ const jsonLd = {
           },
         },
       ],
+    },
+    {
+      "@type": "Product",
+      "@id": `${SITE_URL}/#product`,
+      name: "บริการเก็บชั่วโมงจิตอาสา กยศ. ออนไลน์",
+      description:
+        "รับจ้างเก็บชั่วโมงจิตอาสาและกรอกข้อมูลลงระบบ กยศ. สำหรับนักศึกษา งานเสร็จไวใน 1-3 วัน เริ่มต้นเพียง 5 บาทต่อชั่วโมง",
+      image: `${SITE_URL}/images/cat-icons/logo_cat.png`,
+      brand: {
+        "@type": "Brand",
+        name: "MeowAcademy",
+      },
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "4.9",
+        reviewCount: "82",
+        bestRating: "5",
+        worstRating: "1",
+      },
+      offers: {
+        "@type": "AggregateOffer",
+        lowPrice: "5",
+        highPrice: "150",
+        priceCurrency: "THB",
+        offerCount: "3",
+      },
     },
   ],
 };
