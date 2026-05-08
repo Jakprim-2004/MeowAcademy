@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Clock, CheckCircle, XCircle, Loader2, Package, FileText, RefreshCw, ChevronLeft, ChevronRight, CreditCard, Receipt } from "lucide-react";
@@ -103,8 +103,10 @@ const OrderStatus = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const fetchErrorRef = useRef(false);
+
   useEffect(() => {
-    if (user) {
+    if (user && !fetchErrorRef.current) {
       fetchOrders();
     }
   }, [user, currentPage]);
@@ -152,9 +154,13 @@ const OrderStatus = () => {
       });
       
       setOrders(processedOrders);
+      fetchErrorRef.current = false;
     } catch (error) {
       console.error('Error fetching orders:', error);
-      toast.error("ไม่สามารถโหลดข้อมูลคำสั่งซื้อได้");
+      if (!fetchErrorRef.current) {
+        toast.error("ไม่สามารถโหลดข้อมูลคำสั่งซื้อได้");
+      }
+      fetchErrorRef.current = true;
     } finally {
       setIsLoading(false);
     }
