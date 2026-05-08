@@ -545,7 +545,7 @@ const Register = () => {
                   </Label>
                   <Input
                     id="gysPassword"
-                    type="password"
+                    type="text"
                     placeholder="กรอกรหัสผ่าน กยศ. Connect"
                     value={formData.gysPassword}
                     onChange={(e) => setFormData({ ...formData, gysPassword: e.target.value })}
