@@ -105,11 +105,13 @@ const OrderStatus = () => {
 
   const fetchErrorRef = useRef(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (user && !fetchErrorRef.current) {
+      fetchErrorRef.current = false;
       fetchOrders();
     }
-  }, [user, currentPage]);
+  }, [user?.id, currentPage]);
 
   const fetchOrders = async () => {
     if (!user) return;
