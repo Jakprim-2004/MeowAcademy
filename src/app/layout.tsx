@@ -264,17 +264,23 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
 
-
-        {/* Google Analytics - เปิดใช้งานเมื่อมี Measurement ID จริง */}
-        {/* 
-        <Script strategy="afterInteractive" src="https://www.googletagmanager.com/gtag/js?id=G-YOUR_ID" />
-        <Script id="google-analytics" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: `
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-YOUR_ID');
-        `}} />
-        */}
+        {/* Google Analytics */}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-5KD02S5C7P"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-5KD02S5C7P');
+            `,
+          }}
+        />
         <TooltipProvider>
           <Toaster />
           <Sonner />
