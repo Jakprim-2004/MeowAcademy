@@ -361,7 +361,7 @@ const Register = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Back button */}
         <Link
-          to="/"
+          href="/"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -371,7 +371,7 @@ const Register = () => {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-10 animate-fade-in">
-            <Link to="/" className="inline-flex items-center gap-2 mb-6">
+            <Link href="/" className="inline-flex items-center gap-2 mb-6">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-glow">
                 <img src="/images/cat-icons/logo_cat.png" alt="MeowAcademy Logo" className="w-full h-full object-contain drop-shadow-md" />
               </div>
@@ -395,7 +395,7 @@ const Register = () => {
                   <Badge className="bg-hero-gradient text-primary-foreground">
                     บริการที่เลือก
                   </Badge>
-                  <Link to="/#services" className="text-sm text-primary hover:underline">
+                  <Link href="/#services" className="text-sm text-primary hover:underline">
                     เปลี่ยนบริการ
                   </Link>
                 </div>
