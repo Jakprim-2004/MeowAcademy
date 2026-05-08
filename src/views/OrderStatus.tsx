@@ -311,6 +311,7 @@ const OrderStatus = () => {
                           ⏰ หมดเวลาชำระแล้ว - จะถูกยกเลิกอัตโนมัติ
                         </div>
                       )}
+                    </CardHeader>
 
                     <CardContent>
                       <div className="flex flex-wrap gap-4 text-sm">
