@@ -113,15 +113,6 @@ const OrderStatus = () => {
     if (!user) return;
     setIsLoading(true);
     try {
-      // Auto-cancel pending orders older than 24 hours
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      await supabase
-        .from('orders')
-        .update({ status: 'cancelled' })
-        .eq('user_id', user.id)
-        .eq('status', 'pending')
-        .lt('created_at', twentyFourHoursAgo);
-
       // Get total count — filtered by current user
       const { count, error: countError } = await supabase
         .from('orders')
@@ -143,7 +134,24 @@ const OrderStatus = () => {
         .range(from, to);
 
       if (error) throw error;
-      setOrders(data || []);
+      
+      // Auto-cancel expired pending orders (older than 24 hours) on client side
+      const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+      const processedOrders = (data || []).map(order => {
+        if (order.status === 'pending' && new Date(order.created_at).getTime() < twentyFourHoursAgo) {
+          // Silently update in background (fire-and-forget)
+          supabase
+            .from('orders')
+            .update({ status: 'cancelled' })
+            .eq('id', order.id)
+            .eq('user_id', user.id)
+            .then(() => {});
+          return { ...order, status: 'cancelled' as const };
+        }
+        return order;
+      });
+      
+      setOrders(processedOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast.error("ไม่สามารถโหลดข้อมูลคำสั่งซื้อได้");
